@@ -77,6 +77,8 @@ agent-skill-lecture-builder/
 │           └── reference/
 │               ├── base.html
 │               ├── components.md
+│               ├── html-deck-mode.md
+│               ├── deck-template.html
 │               └── config-example.yaml
 ├── config/
 │   ├── global.yaml          # 全域設定（講者、社群、頁尾）
@@ -137,6 +139,12 @@ node .agents/skills/course-page-generator/scripts/build.mjs my-course
 ```bash
 node .agents/skills/course-page-generator/scripts/generate-og.mjs my-course
 ```
+
+## HTML Deck Mode
+
+The normal course page flow still uses `content.md` + `config.yaml` to generate `index.html`. For interactive HTML slides, use the separate deck mode, but keep `content.md` as the single knowledge master: first create or update `content.md`, then derive `slides.html` from that file.
+
+`slides.html` may compress, reorder, and rewrite the material for live presentation, but it must not add claims or examples that conflict with `content.md`. Deck mode does not depend on the course page `base.html` presentation or print features; those built-in slide and PDF export paths have been removed from the course page template.
 
 ## Config 機制
 
@@ -280,7 +288,7 @@ quotes:
 - `id` 為 YouTube 影片 ID（網址中 `v=` 後面的值）
 - `title` 為選填的標題/說明，顯示在影片下方
 - 影片以 16:9 比例響應式嵌入
-- 列印模式下顯示 YouTube 連結取代 iframe
+- 本機預覽時若 YouTube iframe 受瀏覽器限制，可改用 YouTube 連結確認內容
 
 ### Bonus 彈窗
 

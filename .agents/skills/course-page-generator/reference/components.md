@@ -331,7 +331,7 @@ openspec init</div>
 - `title` 為選填的影片標題/說明，會顯示在影片下方
 - 區塊形式 `[youtube]...[/youtube]` 中間的文字作為 caption
 - 影片以 16:9 比例響應式嵌入
-- 列印模式下 iframe 隱藏，改為顯示 YouTube 連結
+- 本機預覽時若 iframe 受瀏覽器限制，改用 YouTube 連結確認內容
 - 整個區塊包在 `<div class="reveal">` 中
 
 ## 13. Inline Elements

@@ -187,7 +187,7 @@ npm install -g @fission-ai/openspec@latest
 - `id` 為 YouTube 影片 ID（網址中 `v=` 後面的值）
 - `title` 為選填標題，顯示在影片下方
 - 影片以 16:9 比例響應式嵌入
-- 列印模式下顯示 YouTube 連結取代 iframe
+- 本機預覽時若 YouTube iframe 受瀏覽器限制，可改用 YouTube 連結確認內容
 
 完整元件對照請參考：[components.md](reference/components.md)
 Markdown 範例請參考：[content-example.md](reference/content-example.md)
@@ -379,3 +379,18 @@ node .agents/skills/course-page-generator/scripts/generate-og.mjs course/cake
 - YAML 範例：[config-example.yaml](reference/config-example.yaml)
 - Markdown 範例：[content-example.md](reference/content-example.md)
 - HTML 模板：[base.html](reference/base.html)
+
+## HTML Deck Mode
+
+Use the normal course-page flow by default: convert source material to `content.md`, build `<course-dir>/index.html`, then generate the OG image.
+
+Use HTML deck mode only when the user explicitly asks for HTML slides, interactive web slides, a shareable slide deck, Chart.js/table/decision-tree slides, or a presentation that should be separate from the long-form course page.
+
+Deck mode still starts from `content.md` as the single knowledge master. First create or update `<course-dir>/content.md`, then derive `slides.html` from that file. The deck may compress, reorder, and rewrite the material for live presentation, but it must not add claims, examples, decisions, or conclusions that conflict with or are unsupported by `content.md`.
+
+Deck mode is intentionally separate from `reference/base.html`. Do not rely on the course page template's former presentation or print/PDF behavior. Start from `reference/deck-template.html`, follow `reference/html-deck-mode.md`, and produce one standalone `<course-dir>/slides.html` with inline CSS/JS and base64-embedded local images.
+
+Deck mode references:
+
+- HTML deck rules: [html-deck-mode.md](reference/html-deck-mode.md)
+- Standalone deck template: [deck-template.html](reference/deck-template.html)

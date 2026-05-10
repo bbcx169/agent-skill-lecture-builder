@@ -1,46 +1,45 @@
 page:
   lang: zh-TW
-  favicon: "https://deanlin.net/images/favicon.png"
+  favicon: "config/assets/fire-services-logo.svg"
 
 instructor:
-  name: "工程師下班有約"
-  tagline: "AI 企業講師 · 擅長團隊培訓 · 百大企業指定"
-  bio: >
-    專注於 AI 開發工作流的實踐與推廣。<br>
-    擅長將複雜的技術概念轉化為可落地的工作流程，讓團隊真正提升開發效率而非盲目追逐工具。
-  avatar: "config/assets/author"
+  name: "李宇松"
+  tagline: "新北市政府消防局危險物品管理科科長 · 公共危險物品與高壓氣體安全管理 · 防災宣導"
+  bio: "中央警察大學消防學系、臺灣大學地理環境資源學系碩士"
+  avatar: "config/assets/rhino-captain-avatar"
   stats:
-    - text: "📚 出版 **7** 本專業書籍"
-      url: "https://www.tenlong.com.tw/search?keyword=%E6%9E%97%E9%BC%8E%E6%B7%B5"
-    - text: "🎤 超過 **100** 場講座"
-      url: "https://www.youtube.com/@dean-lin"
-    - text: "✍️ 發表超過 **400** 篇文章"
-      url: "https://medium.com/@dean-lin"
+    - text: "🎓 中央警察大學消防學系、臺灣大學地理環境資源學系碩士"
+      url: "https://www.fire.ntpc.gov.tw/PageDepartment/Detail?fid=194&id=13"
+    - text: "🚒 危險物品管理科科長"
+      url: "https://www.fire.ntpc.gov.tw/PageDepartment/Detail?fid=194&id=13"
+    - text: "📋 業管公共危險物品、爆竹煙火、液化石油氣與燃氣熱水器安全"
+      url: "https://www.fire.ntpc.gov.tw/PageDepartment/Detail?fid=194&id=13"
   socials:
+    - platform: "Website"
+      url: "https://www.fire.ntpc.gov.tw/"
     - platform: "Facebook"
-      url: "https://www.facebook.com/dean.lin.profile"
-    - platform: "YouTube"
-      url: "https://www.youtube.com/@dean-lin"
-    - platform: "Medium"
-      url: "https://medium.com/@dean-lin"
-    - platform: "Threads"
-      url: "https://www.threads.net/@dean.lin"
+      url: "https://www.facebook.com/NTPC119"
+    - platform: "LINE"
+      url: "https://line.me/R/ti/p/@esf8311y"
+    - platform: "防災宣導互動網"
+      url: "https://www.dsc.ntpc.gov.tw/"
 
 quotes:
   opening:
-    text: "這裡可放課程開場金句示意，<br>用一句話建立主題氛圍與價值。"
+    text: "防災不是口號，而是把風險管理落實到每一次用火、用電與用氣的日常選擇。"
   closing:
     text: >
-      這裡可放課程結尾金句示意，<br>
-      收束整體內容並強化核心觀點。<br><br>
-      可用來引導學員後續行動或延伸學習。
+      多一分預防，就少一分災害；<br>
+      把正確知識帶回現場，就是守護城市安全的第一步。
 
 
 seo:
-  title: "課程標題示意｜主題副標示意"
-  description: "歡迎追蹤我的社群，獲取更多 AI 開發實戰內容"
+  site_name: "新北市政府消防局"
+  type: "article"
+  title: "新北市政府消防局防災課程｜危險物品與居家安全宣導"
+  description: "由新北市政府消防局危險物品管理科李宇松科長分享公共危險物品、爆竹煙火、液化石油氣、燃氣熱水器與防災安全重點。"
 
 footer:
-  cta: "歡迎追蹤我的社群，獲取更多 AI 開發實戰內容"
-  copyright: "© 工程師下班有約"
+  cta: "更多防災資訊請追蹤新北市政府消防局官方平台"
+  copyright: "© 新北市政府消防局"
   show_socials: true

@@ -1031,6 +1031,37 @@ function loadConfig(courseDir) {
 
 // ─── Embed local images as base64 data URIs ───
 
+const IMAGE_MIME_MAP = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  gif: 'image/gif',
+  svg: 'image/svg+xml',
+  webp: 'image/webp',
+};
+
+function resolveLocalAssetDataUri(src, rootDir) {
+  if (!src || src.startsWith('data:') || /^https?:\/\//.test(src)) return src;
+
+  let absPath = resolve(rootDir, src);
+  if (!existsSync(absPath)) {
+    for (const ext of ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg']) {
+      const candidate = absPath + '.' + ext;
+      if (existsSync(candidate)) {
+        absPath = candidate;
+        break;
+      }
+    }
+  }
+
+  if (!existsSync(absPath)) return null;
+
+  const ext = absPath.split('.').pop().toLowerCase();
+  const mime = IMAGE_MIME_MAP[ext] || `image/${ext}`;
+  const b64 = readFileSync(absPath).toString('base64');
+  return `data:${mime};base64,${b64}`;
+}
+
 function embedLocalImages(html, courseDir) {
   return html.replace(/<img\s([^>]*?)src="([^"]+)"([^>]*?)>/g, (match, pre, src, post) => {
     if (src.startsWith('data:')) return match;
@@ -1041,8 +1072,7 @@ function embedLocalImages(html, courseDir) {
       return match;
     }
     const ext = absPath.split('.').pop().toLowerCase();
-    const mimeMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', svg: 'image/svg+xml', webp: 'image/webp' };
-    const mime = mimeMap[ext] || `image/${ext}`;
+    const mime = IMAGE_MIME_MAP[ext] || `image/${ext}`;
     const b64 = readFileSync(absPath).toString('base64');
     return `<img ${pre}src="data:${mime};base64,${b64}"${post}>`;
   });
@@ -1063,21 +1093,19 @@ function build(courseDir) {
 
   const { cfg, globalRoot } = loadConfig(courseDir);
 
-  if (cfg.instructor?.avatar) {
-    let absAvatar = resolve(globalRoot, cfg.instructor.avatar);
-    if (!existsSync(absAvatar)) {
-      for (const ext of ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg']) {
-        const candidate = absAvatar + '.' + ext;
-        if (existsSync(candidate)) { absAvatar = candidate; break; }
-      }
+  if (cfg.page?.favicon) {
+    const faviconUri = resolveLocalAssetDataUri(cfg.page.favicon, globalRoot);
+    if (faviconUri) {
+      cfg.page.favicon = faviconUri;
     }
-    if (existsSync(absAvatar)) {
-      const ext = absAvatar.split('.').pop().toLowerCase();
-      const mimeMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', svg: 'image/svg+xml', webp: 'image/webp' };
-      const mime = mimeMap[ext] || `image/${ext}`;
-      const b64 = readFileSync(absAvatar).toString('base64');
-      cfg.instructor.avatar = `data:${mime};base64,${b64}`;
+  }
+
+  if (cfg.instructor?.avatar) {
+    const avatarUri = resolveLocalAssetDataUri(cfg.instructor.avatar, globalRoot);
+    if (avatarUri) {
+      cfg.instructor.avatar = avatarUri;
     } else {
+      const absAvatar = resolve(globalRoot, cfg.instructor.avatar);
       cfg.instructor.avatar = relative(courseDir, absAvatar);
     }
   }

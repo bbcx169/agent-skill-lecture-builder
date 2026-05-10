@@ -12,7 +12,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>{{PAGE_TITLE}}</title>
-  <link rel="icon" type="image/png" href="{{FAVICON}}">
+  <link rel="icon" href="{{FAVICON}}">
   <meta property="og:type" content="{{OG_TYPE}}">
   <meta property="og:title" content="{{OG_TITLE}}">
   <meta property="og:description" content="{{OG_DESCRIPTION}}">
@@ -1135,7 +1135,8 @@
       width: 130px;
       height: 130px;
       border-radius: 50%;
-      object-fit: cover;
+      object-fit: contain;
+      padding: 8px;
       border: 3px solid var(--accent);
       flex-shrink: 0;
       background: var(--bg-card-alt);

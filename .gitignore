@@ -13,4 +13,5 @@ pnpm-debug.log*
 
 .cache/
 .tmp/
+.tmp-global-preview/
 tmp/

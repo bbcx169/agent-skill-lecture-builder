@@ -1214,23 +1214,29 @@
 
     .social-links {
       display: flex;
-      flex-wrap: wrap;
-      gap: .6rem;
-      margin-top: 1rem
+      flex-wrap: nowrap;
+      gap: .45rem;
+      margin-top: 1rem;
+      width: 100%
     }
 
     .social-links a {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: .4rem;
-      padding: .45rem .9rem;
+      gap: .32rem;
+      flex: 1 1 0;
+      min-width: 0;
+      min-height: 42px;
+      padding: .45rem .5rem;
       border-radius: 100px;
       border: 1px solid var(--border);
       color: var(--text-dim);
       text-decoration: none;
-      font-size: .78rem;
+      font-size: .72rem;
       font-weight: 500;
+      line-height: 1.2;
+      text-align: center;
       transition: all .3s;
     }
 
@@ -1244,6 +1250,18 @@
       flex-shrink: 0;
       width: 18px;
       height: 18px
+    }
+
+    .footer-social-links {
+      justify-content: center;
+      width: min(66.666%, 760px);
+      margin: 0 auto 1.5rem
+    }
+
+    .footer-social-links a {
+      min-height: 38px;
+      padding: .4rem .45rem;
+      font-size: .7rem
     }
 
     @media(max-width:640px) {
@@ -2769,6 +2787,7 @@
 
     // Anchor scroll stabilization — images may change layout after initial jump.
     var hashScrollTimer = null;
+    var hashStabilizeUntil = 0;
     function scrollToHashTarget(hash, behavior) {
       if (!hash || hash === '#') return;
       var id = hash.charAt(0) === '#' ? hash.slice(1) : hash;
@@ -2779,11 +2798,16 @@
     }
     function scheduleHashScrollFix(delay, behavior) {
       if (!window.location.hash) return;
+      if (Date.now() > hashStabilizeUntil) return;
       clearTimeout(hashScrollTimer);
       hashScrollTimer = setTimeout(function () {
+        if (Date.now() > hashStabilizeUntil) return;
         scrollToHashTarget(window.location.hash, behavior || 'auto');
         updateToc();
       }, delay || 0);
+    }
+    function startHashStabilization(duration) {
+      hashStabilizeUntil = Date.now() + (duration || 1200);
     }
 
     document.querySelectorAll('a[href^="#"]').forEach(function (a) {
@@ -2794,6 +2818,7 @@
         if (!document.getElementById(id)) return;
         e.preventDefault();
         if (window.location.hash !== hash) history.pushState(null, '', hash);
+        startHashStabilization(1200);
         scrollToHashTarget(hash, 'smooth');
         scheduleHashScrollFix(220, 'auto');
         scheduleHashScrollFix(900, 'auto');
@@ -2801,6 +2826,7 @@
     });
 
     window.addEventListener('hashchange', function () {
+      startHashStabilization(1200);
       scheduleHashScrollFix(0, 'auto');
       scheduleHashScrollFix(220, 'auto');
       scheduleHashScrollFix(900, 'auto');
@@ -2813,8 +2839,11 @@
     });
 
     window.addEventListener('load', function () {
-      scheduleHashScrollFix(0, 'auto');
-      scheduleHashScrollFix(300, 'auto');
+      if (window.location.hash) {
+        startHashStabilization(1200);
+        scheduleHashScrollFix(0, 'auto');
+        scheduleHashScrollFix(300, 'auto');
+      }
     });
 
     // Theme toggle

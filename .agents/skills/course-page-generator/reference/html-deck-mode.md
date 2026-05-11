@@ -25,17 +25,21 @@ or print/PDF conversion logic.
 
 ## Output Contract
 
-- Produce one standalone `.html` file, usually `slides.html`.
+- Produce one browser-openable `.html` file, usually `slides.html`.
 - Keep `slides.html` in the same course directory as `content.md` unless the
   user asks for a different output location.
-- Keep CSS and JavaScript inline unless a CDN is clearly useful, such as
-  Chart.js or web fonts.
+- Keep CSS and JavaScript inline.
+- Do not depend on external CDNs, web fonts, or remote scripts. Decks must work
+  when opened from disk or served locally without internet access.
 - Use real HTML text for slide titles, paragraphs, tables, chart labels,
   decision nodes, and CTA text.
 - Do not turn the deck into a sequence of full-slide images. Images are visual
   assets, except for intentional cover or closing hero backgrounds.
-- Embed local images as `data:image/...;base64,...` before final delivery.
-- Keep the deck browser-openable without a dev server.
+- Reference local images with paths relative to `slides.html`, such as
+  `assets/slide-01.jpg`. Avoid embedding large images as base64 data URIs
+  because it can make the deck slow or fail to open in local browsers.
+- Keep the deck browser-openable without a dev server, as long as the course
+  folder and its `assets/` directory stay together.
 
 ## Recommended Sequence
 
@@ -49,7 +53,7 @@ Use 10-12 slides unless the user gives a different count:
 6. Detail: split image/text, flipped.
 7. Detail: split image/text.
 8. Comparison: visual plus sortable table.
-9. Data: lazy Chart.js chart.
+9. Data: lazy local canvas chart.
 10. Decision: clickable decision tree or choice cards.
 11. Workflow: 2x3 method grid.
 12. CTA: full-bleed closing page.
@@ -84,8 +88,9 @@ Include at least two meaningful interactions when the content permits:
 - Alternate split layouts to create a Z-pattern.
 - Match the course page `base.html` visual system: dark `#0f1117`
   background, `#181b25` / `#1e2130` panels, warm coral/gold accents
-  (`#e8845a`, `#e8b878`, `#e08898`), `Noto Serif TC` headings, and
-  `Noto Sans TC` body text.
+  (`#e8845a`, `#e8b878`, `#e08898`), serif-like heading weight, and
+  readable Traditional Chinese system fonts such as `Microsoft JhengHei`,
+  `PingFang TC`, or `Noto Sans TC` when available locally.
 
 ## Template
 
@@ -101,10 +106,10 @@ Before delivery, inspect the generated deck for:
 - Planned number of `<section class="slide">` elements.
 - Every slide's claim is traceable to `content.md`.
 - No slide introduces a point that contradicts `content.md`.
-- Every local `<img>` source is a base64 data URI.
+- Every local `<img>` source resolves relative to `slides.html`.
 - `goto(n)` updates the active slide, progress bar, section tag, and page count.
 - Table sorting changes actual table rows.
-- Chart.js initializes only when the chart slide becomes active.
+- Canvas chart rendering initializes only when the chart slide becomes active.
 - Decision choices are real clickable HTML elements.
 - No references to missing global DOM ids.
 - Text does not overflow controls or overlap adjacent content.

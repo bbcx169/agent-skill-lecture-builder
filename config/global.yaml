@@ -4,24 +4,26 @@ page:
 
 instructor:
   name: "李宇松"
-  tagline: "新北市政府消防局危險物品管理科科長 · 公共危險物品與高壓氣體安全管理 · 防災宣導"
+  tagline: "新北市政府消防局 · 危險物品管理科 · 安全管理 · 防災宣導"
   bio: "中央警察大學消防學系、臺灣大學地理環境資源學系碩士"
   avatar: "config/assets/rhino-captain-avatar"
   stats:
-    - text: "🎓 中央警察大學消防學系、臺灣大學地理環境資源學系碩士"
-      url: "https://www.fire.ntpc.gov.tw/PageDepartment/Detail?fid=194&id=13"
-    - text: "🚒 危險物品管理科科長"
-      url: "https://www.fire.ntpc.gov.tw/PageDepartment/Detail?fid=194&id=13"
-    - text: "📋 業管公共危險物品、爆竹煙火、液化石油氣與燃氣熱水器安全"
-      url: "https://www.fire.ntpc.gov.tw/PageDepartment/Detail?fid=194&id=13"
+    - text: "⚠️ 公共危險物品"
+      url: "https://www.fire.ntpc.gov.tw/PageDoc/Detail?fid=69&id=1114"
+    - text: "🔥 液化石油氣"
+      url: "https://service.ntpc.gov.tw/eservice/CaseData.action?itemId=126015"
+    - text: "♨️ 燃氣熱水器"
+      url: "https://service.ntpc.gov.tw/eservice/CaseData.action?itemId=126008"
+    - text: "🎆 爆竹煙火"
+      url: "https://service.ntpc.gov.tw/eservice/CaseData.action?itemId=126003"
   socials:
-    - platform: "Website"
+    - platform: "消防局官網"
       url: "https://www.fire.ntpc.gov.tw/"
-    - platform: "Facebook"
+    - platform: "消防發爾麵"
       url: "https://www.facebook.com/NTPC119"
-    - platform: "LINE"
+    - platform: "LINE帳號"
       url: "https://line.me/R/ti/p/@esf8311y"
-    - platform: "防災宣導互動網"
+    - platform: "防災宣導網"
       url: "https://www.dsc.ntpc.gov.tw/"
 
 quotes:
@@ -40,6 +42,6 @@ seo:
   description: "由新北市政府消防局危險物品管理科李宇松科長分享公共危險物品、爆竹煙火、液化石油氣、燃氣熱水器與防災安全重點。"
 
 footer:
-  cta: "更多防災資訊請追蹤新北市政府消防局官方平台"
+  cta: "追蹤新北市政府消防局官方平台，為您提供更多防災最新資訊"
   copyright: "© 新北市政府消防局"
   show_socials: true

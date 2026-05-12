@@ -50,6 +50,9 @@ h2{font-family:"Noto Serif TC","Microsoft JhengHei","PingFang TC",serif;font-siz
 .big-question{text-align:center}
 .big-question h1{font-size:70px}
 .big-question .lead{margin-left:auto;margin-right:auto}
+.focus-card{max-width:920px;margin:0 auto;padding:32px 36px;background:linear-gradient(135deg,rgb(var(--accent-rgb) / .08),rgb(var(--accent2-rgb) / .04));border:1px solid rgb(var(--accent-rgb) / .18);border-radius:var(--radius);box-shadow:0 18px 54px rgb(0 0 0 / .18)}
+.focus-card h1{margin-bottom:12px}
+.focus-card .lead{max-width:none;margin-top:0}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
 .split.flip .text{order:1}
 .split.flip .split-img{order:2}
@@ -103,6 +106,7 @@ table.compare tr:hover td{background:rgb(var(--accent-rgb) / .06)}
   h1{font-size:38px}
   .big-question h1,.closing .answer{font-size:42px}
   .lead{font-size:17px}
+  .focus-card{padding:24px}
   .split,.compare-layout,.three-col,.soil-flow,.action-grid{grid-template-columns:1fr}
   .action-card{min-height:auto}
   .split.flip .text,.split.flip .split-img{order:initial}
@@ -132,17 +136,21 @@ table.compare tr:hover td{background:rgb(var(--accent-rgb) / .06)}
 
   <section class="slide" data-section="OPEN">
     <div class="slide-inner big-question">
-      <span class="kicker">QUESTION</span>
-      <h1>What has changed?</h1>
-      <p class="lead">Use one focused question. Do not overload this slide.</p>
+      <div class="focus-card">
+        <span class="kicker">QUESTION</span>
+        <h1>What has changed?</h1>
+        <p class="lead">Use one focused question. Do not overload this slide.</p>
+      </div>
     </div>
   </section>
 
   <section class="slide" data-section="OPEN">
     <div class="slide-inner">
-      <span class="kicker">THESIS</span>
-      <h1>The new frame</h1>
-      <p class="lead">State the central argument in practical language.</p>
+      <div class="focus-card">
+        <span class="kicker">THESIS</span>
+        <h1>The new frame</h1>
+        <p class="lead">State the central argument in practical language.</p>
+      </div>
     </div>
   </section>
 

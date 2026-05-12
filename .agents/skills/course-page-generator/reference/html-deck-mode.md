@@ -53,10 +53,10 @@ Use 10-12 slides unless the user gives a different count:
 6. Detail: split image/text, flipped.
 7. Detail: split image/text.
 8. Comparison: visual plus sortable table.
-9. Data: lazy local canvas chart.
+9. Evidence or action slide: use a chart only when the source has real quantitative data; otherwise use action cards, a flow, or a comparison matrix that fits the content.
 10. Decision: clickable decision tree or choice cards.
 11. Workflow: 2x3 method grid.
-12. CTA: full-bleed closing page.
+12. CTA: full-bleed closing page. It must synthesize the final conclusion from `content.md` `[summary]` or the last substantive section; do not output an empty CTA or use only the section title as the conclusion.
 
 ## Required Interaction
 
@@ -64,7 +64,7 @@ Include at least two meaningful interactions when the content permits:
 
 - Clickable overview cards that jump to detail slides.
 - Sortable comparison table columns.
-- Lazy chart rendering when the chart slide is first opened.
+- Lazy chart rendering when the source contains real quantitative data.
 - Clickable decision tree or choice cards.
 - Feature toggle buttons that change visible content.
 

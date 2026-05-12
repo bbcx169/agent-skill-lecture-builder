@@ -77,6 +77,7 @@ agent-skill-lecture-builder/
 │           └── reference/
 │               ├── base.html
 │               ├── components.md
+│               ├── design-spec.md
 │               ├── html-deck-mode.md
 │               ├── deck-template.html
 │               └── config-example.yaml
@@ -145,6 +146,32 @@ node .agents/skills/course-page-generator/scripts/generate-og.mjs my-course
 The normal course page flow still uses `content.md` + `config.yaml` to generate `index.html`. For interactive HTML slides, use the separate deck mode, but keep `content.md` as the single knowledge master: first create or update `content.md`, then derive `slides.html` from that file.
 
 `slides.html` may compress, reorder, and rewrite the material for live presentation, but it must not add claims or examples that conflict with `content.md`. Deck mode does not depend on the course page `base.html` presentation or print features; those built-in slide and PDF export paths have been removed from the course page template.
+
+## Visual System
+
+這個專案的視覺風格不是定義在 `global.yaml`，而是定義在模板與 design spec：
+
+- 長頁課程頁模板：[`base.html`](./.agents/skills/course-page-generator/reference/base.html)
+- HTML Deck 模板：[`deck-template.html`](./.agents/skills/course-page-generator/reference/deck-template.html)
+- 共用視覺規格：[`design-spec.md`](./.agents/skills/course-page-generator/reference/design-spec.md)
+
+目前的共同風格是：
+
+- 深色、正式、專業的資訊介面
+- 主背景 `#0f1117`，卡片背景 `#181b25` / `#1e2130`
+- 主強調色為橘色 `#e8845a`，輔助色為金色 `#e8b878`
+- 標題使用 `Noto Serif TC`，內文使用 `Noto Sans TC`
+- 卡片化資訊呈現、細邊框、12px 圓角、低對比陰影
+- 適合政策說明、案例教學、法規整理、決策簡報
+
+`config/global.yaml` 與課程 `config.yaml` 主要負責內容層與品牌資訊，例如：
+
+- favicon
+- 講師與社群
+- badge / hero 文案
+- footer / SEO
+
+如果你要改的是「品牌感」，應優先修改模板與 `design-spec.md`；如果你要改的是「這一門課的內容與標示」，才修改 YAML。
 
 ## Config 機制
 

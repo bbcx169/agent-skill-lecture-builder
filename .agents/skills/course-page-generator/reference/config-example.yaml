@@ -2,18 +2,50 @@
 # Course Page Generator — YAML Config 完整範例
 # 可作為 global.yaml 或課程 config.yaml 的參考
 # 課程 config 只需寫要覆蓋的欄位（deep merge）
+# 視覺系統主要定義在 reference/base.html、reference/deck-template.html
+# 若要調整品牌感，請優先修改模板與 reference/design-spec.md，而不是在 YAML 內硬塞色碼
 # ===================================================
+
+# ---------------------------------------------------
+# Theme / Visual Notes
+# ---------------------------------------------------
+# 目前內建風格採深色專業資訊介面：
+# - 主背景：#0f1117
+# - 卡片背景：#181b25 / #1e2130
+# - 主強調色：#e8845a
+# - 輔助強調色：#e8b878
+# - 標題字體：Noto Serif TC
+# - 內文字體：Noto Sans TC
+#
+# YAML 不直接控制這些 CSS tokens。
+# 這份設定檔負責的是品牌內容，例如：
+# - favicon
+# - 講者資訊
+# - badge / hero 文案
+# - footer / socials
+# - SEO
+#
+# 若要維持一致風格，請遵守：
+# - badge 文案簡潔，不要過長
+# - hero_title 以 1 到 2 行為主
+# - subtitle 不要寫成長段落
+# - socials 平台名稱盡量短，避免 UI 撐爆
+# - 若使用自訂圖片，請優先選擇高對比、資訊清楚的素材
 
 # ---------------------------------------------------
 # 頁面基本設定
 # ---------------------------------------------------
 page:
   lang: zh-TW
+  # favicon 可用本機 svg/png/jpg/webp；build 會處理為適合輸出的形式
   favicon: "https://deanlin.net/images/favicon.png"
   title: "課程標題示意 — 從主題介紹到實作應用"
+  # badge 建議控制在 18 個全形字內，作為分類或情境標籤
   badge: "課程分類示意 · 主題標籤示意"
   # hero_title 支援 <br> 換行
+  # 建議控制在 1 至 2 行，避免 Hero 區塊過高
   hero_title: "從核心概念理解<br>到實際案例應用"
+  # subtitle 建議 40 至 90 字，描述對象、目的與收穫
   subtitle: "這裡可放課程副標示意，簡要說明學習重點、適合對象與完成後可獲得的能力。"
 
 # ---------------------------------------------------

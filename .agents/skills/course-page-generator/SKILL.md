@@ -1,11 +1,21 @@
 ---
 name: course-page-generator
-description: 將講稿或非結構化筆記轉換為約定的 Markdown 格式，再透過 build script 產生單一 HTML 課程頁面與 OG 縮圖。Skill 的主要任務是 Markdown 格式轉換，build 與 OG 圖片生成是最後的必要步驟。
+description: 將原始講稿、法規、報告或非結構化筆記轉換為結構化 Markdown，支援生成單頁課程網頁，也可依公務簡報藍圖產生 HTML Deck 簡報。Skill 的主要任務是 content.md 格式轉換；build 與 OG 圖片生成是最後的必要步驟。
 ---
 
 # Course Page Generator
 
-原始講稿 → 結構化 Markdown → `node .agents/skills/course-page-generator/scripts/build.mjs <dir>` → `index.html` → `node .agents/skills/course-page-generator/scripts/generate-og.mjs <dir>` → `assets/og-*.jpg`
+原始講稿／法規／報告 → 結構化 Markdown (`content.md`) → `node .agents/skills/course-page-generator/scripts/build.mjs <dir>` → `index.html`（課程頁）／`slides.html`（HTML Deck Mode）→ `node .agents/skills/course-page-generator/scripts/generate-og.mjs <dir>` → `assets/og-*.jpg`
+
+## 核心原則：視覺引導，資訊為本
+
+一般課程以知識傳遞與技能拆解為主；公務簡報以決策者能否快速理解脈絡、風險、方案與下一步為主。
+
+處理公務簡報時，遵循「視覺是導航，文字是證據」：
+- 投影片必須具備獨立閱讀性，即使不搭配口頭報告，決策者也能讀懂背景、問題、證據、建議與下一步。
+- 每頁只回答一個關鍵問題，標題要直接說出判斷或結論。
+- 視覺元素用來降低理解成本，不用來取代證據。
+- 法規、數據、頁碼與文件來源必須保留在 `content.md` 的隱藏溯源層，供內部查核；前端不顯示。
 
 ## 專案結構
 
@@ -30,7 +40,7 @@ description: 將講稿或非結構化筆記轉換為約定的 Markdown 格式，
 
 ## Workflow
 
-### Step 0：偵測輸入類型
+### Step 0：偵測輸入類型與敘事邏輯
 
 在進入轉換流程之前，先判斷使用者提供的是哪種輸入：
 
@@ -39,6 +49,14 @@ description: 將講稿或非結構化筆記轉換為約定的 Markdown 格式，
 | **只有主題** | 只給了一句話主題／標題，無對應資料夾或 Markdown | → 執行「主題生成流程」（見下方） |
 | **有講稿內容** | 提供了講稿文字、大綱、或已有 content.md | → 直接進入 Step 1 |
 | **有現有目錄** | 指定了已存在的課程資料夾 | → 讀取後進入 Step 1 |
+| **公務簡報** | 提供法規、報告、政策、裁示、會議資料、個案查處或明確要求簡報 | → 採用公務敘事邏輯：Context → Complication → Resolution |
+
+敘事邏輯判斷：
+
+| 模式 | 目的 | 結構 |
+|------|------|------|
+| **一般課程** | 知識傳遞、技能拆解、案例教學 | 3–5 個主題章節，循序展開概念與方法 |
+| **公務簡報** | 資訊同步、方案建議、決策裁定 | 背景（Context）→ 挑戰（Complication）→ 解方／裁示事項（Resolution） |
 
 #### 主題生成流程
 
@@ -66,6 +84,11 @@ description: 將講稿或非結構化筆記轉換為約定的 Markdown 格式，
    - 所有占位內容用 `<!-- TODO: ... -->` 或簡短提示標記，讓使用者知道哪裡需要補充
    - 骨架本身應具備足夠結構讓 build 可以成功執行
 
+   公務簡報模式加強規則：
+   - `config.yaml` 補入 `page.subject`、`page.audience`、`page.decision_level`，其中 `decision_level` 可為「資訊同步」、「方案建議」或「決策裁定」。
+   - `#` 章節優先對應 Context、Complication、Resolution；若資料較多，可再拆為「背景、現況、核心問題、方案、後續作為」。
+   - 所有 `###` 標題必須是決策導向標題：用主動語態精準概括該卡片的主要結論，不使用「背景說明」、「問題分析」這類空泛標題。
+
 5. **確認 global config**：檢查是否已有 `config/global.yaml`，若無，在回覆中提示使用者參考 Step 2 建立。
 
 6. **告知使用者**：列出已建立的檔案清單，並說明下一步（補充內容或直接 build）。
@@ -91,7 +114,10 @@ AI 需要根據以下語法規則，將內容轉換為 `content.md`。
 | `> lead text` | 章節引言（緊接 `#` 後） | `> 規格驅動開發（Spec-Driven Development）` |
 | `## Title` | 子章節 | `## OpenSpec 初始化` |
 | `### Emoji Title` | 卡片標題 | `### 🔧 為什麼需要 OpenSpec？` |
+| `### Emoji Headline` | 公務簡報的結論式標題 | `### 📈 預算執行率達 92%，可支應第四季擴大辦理` |
 | `` ```prompt [label="..."] `` | 終端機/Prompt 區塊 | 見下方 |
+| `<!-- source: ... -->` | 隱藏式證據溯源 | `<!-- source: 會議紀錄 p.3；消防法第15條 -->` |
+| `[visual-prompt]...[/visual-prompt]` | AI 視覺指令中繼區塊 | 見下方 |
 | `> **Bold Title**` | 洞察框（Insight） | `> **AI 正在改變企業決策**` |
 | `[flow]...[/flow]` | 流程步驟 | 見下方 |
 | `[tags]...[/tags]` | 標籤（必須用此區塊包裹） | `- [green] 正面` |
@@ -103,6 +129,32 @@ AI 需要根據以下語法規則，將內容轉換為 `content.md`。
 | `---` | 章節分隔線 | 放在 `#` 章節之間 |
 
 #### 詳細語法
+
+**公務簡報決策標題：**
+```markdown
+### 📈 節能補貼執行率達 92%，提前達成年度 KPI
+<!-- source: 114 年第 3 季執行報告 p.8 -->
+- 申請案件數突破 5,000 件
+- 預估帶動民間投資 2.5 億元
+- 現有預算仍可支應第四季擴大辦理
+```
+
+- 標題必須能獨立回答「這頁要決策者知道什麼」。
+- 標題避免只寫分類詞，例如「預算狀況」、「執行成果」、「問題分析」。
+- 凡涉及法規、數字、日期、機關名稱、裁罰依據、會議結論，必須用 `<!-- source: ... -->` 保留來源。`build.mjs` 會在輸出 HTML 前移除 HTML 註解，因此前端不會顯示來源標籤。
+
+**AI 視覺指令（Visual Prompt）：**
+```markdown
+[visual-prompt]
+Subject: A modern sustainable city with solar panels on rooftops and EV charging stations
+Environment: Early morning sunlight, clean civic infrastructure, people using the completed service
+Lighting: Bright natural lighting, soft shadows, photorealistic
+[/visual-prompt]
+```
+
+- 用於 AI 產圖、選圖或設計簡報視覺方向。
+- 內容要描述「政策、工程、服務或改善措施完成後的具體場景」，避免抽象口號或純裝飾。
+- 最終 build 前，必須將 `[visual-prompt]` 轉成實際圖片、`![alt](assets/...)`、`[image-text]`，或移除該區塊；不要讓中繼指令出現在 `index.html` 或 `slides.html`。
 
 **Prompt Block：**
 ~~~markdown
@@ -262,6 +314,9 @@ page:
   badge: "BADGE 文字"
   hero_title: "Hero 大標題<br>支援換行"
   subtitle: "副標題"
+  subject: "計畫／課程主題（公務簡報可填）"
+  audience: "決策層／聽眾單位（公務簡報可填）"
+  decision_level: "資訊同步／方案建議／決策裁定（公務簡報可填）"
 
 seo:
   title: "SEO 標題"
@@ -342,6 +397,13 @@ node .agents/skills/course-page-generator/scripts/generate-og.mjs course/cake
 **⚠️ 核心原則：講義是傳遞資訊的載體，請「萃取重點」而非「逐字轉錄」。**
 請忽略口語化的過場詞（如：大家好、接下來我們看、老實說）、贅字與講者自我呢喃，直接將講稿「提煉」成結構化的條列重點、圖表或卡片。
 
+公務簡報模式另有四項硬性規則：
+
+1. **敘事採 Context → Complication → Resolution** — 先說背景與決策情境，再說矛盾、風險或缺口，最後提出解方、裁示事項或後續作為。
+2. **標題即結論** — `###` 標題必須具有決策參考價值。例如「預算狀況」應改為「預算餘額足以支應第四季擴大辦理」。
+3. **嚴格溯源，前端隱藏** — 所有法規、數據、日期、會議結論與裁罰依據，都以 `<!-- source: ... -->` 保留來源；輸出 HTML 不顯示。
+4. **視覺描述實施後場景** — 若需要 AI 產圖，`[visual-prompt]` 應描述政策或建設完成後的具體樣貌，不使用抽象裝飾語。
+
 當使用者提供原始講稿時，AI 應該：
 
 1. **萃取章節結構** — 移除口語過場，找出核心主題的轉換點，對應到 `#` 主章節與 `##` 子章節。
@@ -367,6 +429,7 @@ node .agents/skills/course-page-generator/scripts/generate-og.mjs course/cake
 5. **提煉深度觀點** — 將講稿中的核心洞察、反思或重要結論，轉為 `> **Title**` Insight Box 點出。
 6. **產生總結** — 最後一個段落請直接用 `[summary]...[/summary]` 歸納本次課程精華。
 7. **確認開場與結尾引言** — 檢查課程 `config.yaml`（或 `global.yaml`）是否已設定 `quotes.opening` 和 `quotes.closing`。若尚未設定，根據講稿的核心精神各撰寫一段引言，寫入 `config.yaml`。開場引言出現在講師介紹之後、第一個章節之前；結尾引言出現在所有章節之後、頁尾之前，用於收束整場課程的訊息。
+8. **公務內容檢查** — 若是公務簡報，逐頁檢查是否符合「一頁一問題、一標題一結論、一數據一來源」。
 9. **搜尋並插入圖片** — 當內容適合搭配圖片時（架構圖、截圖、流程圖等），主動用 Glob 工具搜尋 `<course-dir>/assets/` 資料夾中的圖片檔（`*.png`, `*.jpg`, `*.jpeg`, `*.gif`, `*.svg`, `*.webp`）。
    - **找到匹配圖片**：根據檔名判斷最適合的圖片，插入對應的 `![alt](assets/filename)` 或 `[image-text]` 區塊。
    - **找不到圖片**：在該處插入 HTML 註解標記，格式為 `<!-- TODO: 建議在此加入圖片：{圖片描述}，請將圖片放到 assets/ 資料夾 -->`，同時在回覆中彙整所有缺圖位置，提醒使用者補充。
@@ -376,6 +439,7 @@ node .agents/skills/course-page-generator/scripts/generate-og.mjs course/cake
 ## Reference Files
 
 - 元件對照：[components.md](reference/components.md)
+- 視覺規格：[design-spec.md](reference/design-spec.md)
 - YAML 範例：[config-example.yaml](reference/config-example.yaml)
 - Markdown 範例：[content-example.md](reference/content-example.md)
 - HTML 模板：[base.html](reference/base.html)
@@ -388,7 +452,13 @@ Use HTML deck mode only when the user explicitly asks for HTML slides, interacti
 
 Deck mode still starts from `content.md` as the single knowledge master. First create or update `<course-dir>/content.md`, then derive `slides.html` from that file. The deck may compress, reorder, and rewrite the material for live presentation, but it must not add claims, examples, decisions, or conclusions that conflict with or are unsupported by `content.md`.
 
-Deck mode is intentionally separate from `reference/base.html`. Do not rely on the course page template's former presentation or print/PDF behavior. Start from `reference/deck-template.html`, follow `reference/html-deck-mode.md`, and produce one standalone `<course-dir>/slides.html` with inline CSS/JS and base64-embedded local images.
+For public-sector presentation work, derive the deck from the same `content.md` using the public briefing blueprint:
+- Use decision-oriented slide titles instead of topic labels.
+- Preserve hidden evidence comments in `content.md`, but do not render them in `slides.html`.
+- Use charts only when the source has real quantitative data; otherwise prefer action cards, process flow, comparison matrix, or before/after framing.
+- The closing slide must synthesize `[summary]` into takeaways and next actions.
+
+Deck mode is intentionally separate from `reference/base.html`. Do not rely on the course page template's former presentation or print/PDF behavior. Start from `reference/deck-template.html`, follow `reference/html-deck-mode.md`, and produce one standalone `<course-dir>/slides.html` with inline CSS/JS and local images referenced relative to `slides.html`.
 
 Deck mode references:
 

@@ -1,466 +1,174 @@
 ---
 name: course-page-generator
-description: 將原始講稿、法規、報告或非結構化筆記轉換為結構化 Markdown，支援生成單頁課程網頁，也可依公務簡報藍圖產生 HTML Deck 簡報。Skill 的主要任務是 content.md 格式轉換；build 與 OG 圖片生成是最後的必要步驟。
+description: 將原始講稿、法規、報告或非結構化筆記轉換為結構化 Markdown，支援生成單頁課程網頁，也可依公務簡報藍圖產生 HTML Deck 簡報。Use when Codex needs to create or update content.md, config.yaml, index.html, slides.html, or OG images for a course/lecture/briefing page.
 ---
 
 # Course Page Generator
 
-原始講稿／法規／報告 → 結構化 Markdown (`content.md`) → `node .agents/skills/course-page-generator/scripts/build.mjs <dir>` → `index.html`（課程頁）／`slides.html`（HTML Deck Mode）→ `node .agents/skills/course-page-generator/scripts/generate-og.mjs <dir>` → `assets/og-*.jpg`
+Turn source material into a maintainable course artifact:
 
-## 核心原則：視覺引導，資訊為本
+`source material -> content.md -> config.yaml -> index.html -> assets/og-image.jpg`
 
-一般課程以知識傳遞與技能拆解為主；公務簡報以決策者能否快速理解脈絡、風險、方案與下一步為主。
+Use `content.md` as the single knowledge master. Every generated page or deck must derive from it.
 
-處理公務簡報時，遵循「視覺是導航，文字是證據」：
-- 投影片必須具備獨立閱讀性，即使不搭配口頭報告，決策者也能讀懂背景、問題、證據、建議與下一步。
-- 每頁只回答一個關鍵問題，標題要直接說出判斷或結論。
-- 視覺元素用來降低理解成本，不用來取代證據。
-- 法規、數據、頁碼與文件來源必須保留在 `content.md` 的隱藏溯源層，供內部查核；前端不顯示。
+## Core Workflow
 
-## 專案結構
+1. Identify the input type.
+   - Topic only: create a new course folder, `config.yaml`, `content.md`, and `assets/`.
+   - Existing draft or transcript: convert it into structured `content.md`.
+   - Existing course folder: read its `content.md`, `config.yaml`, and relevant assets before editing.
+   - Public-sector briefing: use the public briefing rules below.
 
-```
-.agents/skills/course-page-generator/
-├── scripts/
-│   ├── build.mjs          # 課程頁 build script
-│   └── generate-og.mjs    # 針對課程頁產出 1200x630 OG 縮圖（依賴 Puppeteer）
-└── reference/             # 格式範例與 HTML 模板（含支援 ?og=1 的 base.html）
+2. Create or update `content.md`.
+   - Extract meaning instead of transcribing speech.
+   - Use sections, cards, flows, insights, summaries, and images.
+   - Avoid loose paragraphs when a structured component fits.
+   - Keep evidence comments in `<!-- source: ... -->` when facts must be traceable.
+   - Read [components.md](reference/components.md) when component syntax or rendering behavior matters.
 
-<root>/                      # 任意根目錄（例如 course/、lectures/、docs/）
-├── config/
-│   ├── global.yaml          # 全域設定（講者、社群、頁尾）
-│   └── assets/              # 共用圖片（avatar 等）
-├── <course-dir>/
-│   ├── config.yaml          # 課程專屬設定（覆蓋 global）
-│   ├── content.md           # 結構化 Markdown 講稿
-│   ├── index.html           # 課程頁（build 生成）
-│   └── assets/
-│       └── og-*.jpg         # OG 縮圖（generate-og.mjs 產出）
-```
+3. Create or update `config.yaml`.
+   - Run `git remote get-url origin` before writing SEO URLs.
+   - Derive GitHub Pages base URL when the remote is GitHub:
+     - `git@github.com:user/repo.git` -> `https://user.github.io/repo`
+     - `https://github.com/user/repo.git` -> `https://user.github.io/repo`
+   - Set `seo.url` to `{GH_BASE}/{course-dir}/`.
+   - Set `seo.image` to `{GH_BASE}/{course-dir}/assets/og-image.jpg`.
+   - Leave SEO URL fields empty if no GitHub remote can be derived, and tell the user.
+   - Use [config-example.yaml](reference/config-example.yaml) for complete field examples.
 
-## Workflow
+4. Build from the repo root.
 
-### Step 0：偵測輸入類型與敘事邏輯
-
-在進入轉換流程之前，先判斷使用者提供的是哪種輸入：
-
-| 情境 | 判斷依據 | 行動 |
-|------|----------|------|
-| **只有主題** | 只給了一句話主題／標題，無對應資料夾或 Markdown | → 執行「主題生成流程」（見下方） |
-| **有講稿內容** | 提供了講稿文字、大綱、或已有 content.md | → 直接進入 Step 1 |
-| **有現有目錄** | 指定了已存在的課程資料夾 | → 讀取後進入 Step 1 |
-| **公務簡報** | 提供法規、報告、政策、裁示、會議資料、個案查處或明確要求簡報 | → 採用公務敘事邏輯：Context → Complication → Resolution |
-
-敘事邏輯判斷：
-
-| 模式 | 目的 | 結構 |
-|------|------|------|
-| **一般課程** | 知識傳遞、技能拆解、案例教學 | 3–5 個主題章節，循序展開概念與方法 |
-| **公務簡報** | 資訊同步、方案建議、決策裁定 | 背景（Context）→ 挑戰（Complication）→ 解方／裁示事項（Resolution） |
-
-#### 主題生成流程
-
-當使用者只提供主題（例如「Python 非同步程式設計」）：
-
-1. **決定課程資料夾位置**：將主題轉為 kebab-case 英文（例如 `python-async`）作為資料夾名稱。
-   - 若使用者有指定路徑（例如 `lectures/python-async`），直接使用。
-   - 否則，**用 Glob 工具掃描 repo 根目錄**，觀察現有的課程資料夾放在哪一層（例如是否有 `course/`、`lectures/` 等慣例目錄），沿用同層。
-   - 若無任何慣例可循，直接建在 **repo 根目錄**下（`<course-dir>/`），不假設子目錄。
-
-2. **建立資料夾結構**：
-   ```
-   <root>/<course-dir>/
-   ├── config.yaml      # 從主題推導課程設定
-   ├── content.md       # 根據主題生成骨架
-   └── assets/          # 空資料夾（保留圖片用）
+   ```bash
+   node .agents/skills/course-page-generator/scripts/build.mjs <course-dir>
    ```
 
-3. **生成 `config.yaml`**：根據主題填入基本欄位（`page.title`、`page.hero_title`、`seo.title`、`seo.description`、`quotes.opening`、`quotes.closing`）；`seo.image` 與 `seo.url` 依照 Step 2-0 偵測到的 GitHub Pages 前綴填入；若偵測失敗則留空。
+5. Immediately generate the OG image after any successful build.
 
-4. **生成 `content.md` 骨架**：
-   - 推導 3–5 個主要章節（`#`），每章節下 1–2 個子章節（`##`）與 2–3 張卡片（`### Emoji Title`）
-   - 每張卡片留 2–4 個條列式占位點（重點提示，非最終內容）
-   - 在最後加入 `[summary]` 區塊，列出各章節預期的學習成果
-   - 所有占位內容用 `<!-- TODO: ... -->` 或簡短提示標記，讓使用者知道哪裡需要補充
-   - 骨架本身應具備足夠結構讓 build 可以成功執行
+   ```bash
+   node .agents/skills/course-page-generator/scripts/generate-og.mjs <course-dir>
+   ```
 
-   公務簡報模式加強規則：
-   - `config.yaml` 補入 `page.subject`、`page.audience`、`page.decision_level`，其中 `decision_level` 可為「資訊同步」、「方案建議」或「決策裁定」。
-   - `#` 章節優先對應 Context、Complication、Resolution；若資料較多，可再拆為「背景、現況、核心問題、方案、後續作為」。
-   - 所有 `###` 標題必須是決策導向標題：用主動語態精準概括該卡片的主要結論，不使用「背景說明」、「問題分析」這類空泛標題。
+   This writes `<course-dir>/assets/og-image.jpg`. Do not skip this step after build unless the user explicitly asks to skip it or the environment cannot run Puppeteer.
 
-5. **確認 global config**：檢查是否已有 `config/global.yaml`，若無，在回覆中提示使用者參考 Step 2 建立。
+6. Verify the result.
+   - Confirm `index.html` was generated.
+   - Confirm `assets/og-image.jpg` exists after OG generation.
+   - For visual or layout changes, open or inspect the generated HTML when practical.
 
-6. **告知使用者**：列出已建立的檔案清單，並說明下一步（補充內容或直接 build）。
+## Course Folder Rules
 
-7. **完成後繼續 Step 2 以下流程**（確認 config → build → **OG 縮圖**）。Build 成功後**必須**立即執行 `generate-og.mjs`。
+When the user gives only a topic:
 
----
+1. Convert the topic to an English kebab-case folder name.
+2. If the user specified a path, use it.
+3. Otherwise inspect existing repo folders and follow local convention such as `course/`, `lectures/`, or a root-level course folder.
+4. If there is no convention, create the course folder at the repo root.
+5. Create:
 
-### Step 1：將講稿轉為結構化 Markdown
+   ```text
+   <course-dir>/
+   ├── config.yaml
+   ├── content.md
+   └── assets/
+   ```
 
-這是 Skill 的核心任務。使用者提供的可能是：
-- 非結構化的演講筆記或大綱
-- 已部分格式化的 Markdown
-- 課程投影片的文字內容
+6. Generate a buildable `content.md` skeleton with 3-5 main sections, useful TODO comments, and a final `[summary]` block.
 
-AI 需要根據以下語法規則，將內容轉換為 `content.md`。
+## Content Rules
 
-#### Markdown 語法約定
+Use this structure by default:
 
-| 語法 | 用途 | 範例 |
-|------|------|------|
-| `# LABEL：TITLE` | 主章節 | `# 新專案：用 SDD 讓 AI 根據規格建立專案` |
-| `> lead text` | 章節引言（緊接 `#` 後） | `> 規格驅動開發（Spec-Driven Development）` |
-| `## Title` | 子章節 | `## OpenSpec 初始化` |
-| `### Emoji Title` | 卡片標題 | `### 🔧 為什麼需要 OpenSpec？` |
-| `### Emoji Headline` | 公務簡報的結論式標題 | `### 📈 預算執行率達 92%，可支應第四季擴大辦理` |
-| `` ```prompt [label="..."] `` | 終端機/Prompt 區塊 | 見下方 |
-| `<!-- source: ... -->` | 隱藏式證據溯源 | `<!-- source: 會議紀錄 p.3；消防法第15條 -->` |
-| `[visual-prompt]...[/visual-prompt]` | AI 視覺指令中繼區塊 | 見下方 |
-| `> **Bold Title**` | 洞察框（Insight） | `> **AI 正在改變企業決策**` |
-| `[flow]...[/flow]` | 流程步驟 | 見下方 |
-| `[tags]...[/tags]` | 標籤（必須用此區塊包裹） | `- [green] 正面` |
-| `[summary]...[/summary]` | 總結卡片 | `- 🏗️ **標題** \| 描述` |
-| `- [x] item` | 勾選清單（僅用於已驗證/已完成的事項） | `- [x] 已完成項目` |
-| `![alt](src)` | 獨立圖片 | `![架構圖](images/arch.png)` |
-| `[image-text]...[/image-text]` | 圖文並排 | 見下方 |
-| `[youtube id="..." title="..."]` | YouTube 影片嵌入 | 見下方 |
-| `---` | 章節分隔線 | 放在 `#` 章節之間 |
-
-#### 詳細語法
-
-**公務簡報決策標題：**
 ```markdown
-### 📈 節能補貼執行率達 92%，提前達成年度 KPI
-<!-- source: 114 年第 3 季執行報告 p.8 -->
-- 申請案件數突破 5,000 件
-- 預估帶動民間投資 2.5 億元
-- 現有預算仍可支應第四季擴大辦理
-```
+# LABEL：TITLE
+> section lead
 
-- 標題必須能獨立回答「這頁要決策者知道什麼」。
-- 標題避免只寫分類詞，例如「預算狀況」、「執行成果」、「問題分析」。
-- 凡涉及法規、數字、日期、機關名稱、裁罰依據、會議結論，必須用 `<!-- source: ... -->` 保留來源。`build.mjs` 會在輸出 HTML 前移除 HTML 註解，因此前端不會顯示來源標籤。
+## Subsection
 
-**AI 視覺指令（Visual Prompt）：**
-```markdown
-[visual-prompt]
-Subject: A modern sustainable city with solar panels on rooftops and EV charging stations
-Environment: Early morning sunlight, clean civic infrastructure, people using the completed service
-Lighting: Bright natural lighting, soft shadows, photorealistic
-[/visual-prompt]
-```
+### Emoji Card Title
+- concise point
+- concise point
 
-- 用於 AI 產圖、選圖或設計簡報視覺方向。
-- 內容要描述「政策、工程、服務或改善措施完成後的具體場景」，避免抽象口號或純裝飾。
-- 最終 build 前，必須將 `[visual-prompt]` 轉成實際圖片、`![alt](assets/...)`、`[image-text]`，或移除該區塊；不要讓中繼指令出現在 `index.html` 或 `slides.html`。
-
-**Prompt Block：**
-~~~markdown
-```prompt [label="安裝指令"]
-npm install -g @fission-ai/openspec@latest
-```
-~~~
-
-- Shell 指令開頭（`npm`, `git`, `docker` 等）→ header 顯示 "Terminal"
-- 其他內容 → header 顯示 "Prompt"
-
-**Flow Steps：**
-```markdown
-[flow]
-1. proposal.md — 確認目標與範圍
-2. design.md — 技術選型與風險評估
-[/flow]
-```
-
-**Tags：**
-```markdown
-[tags]
-- [green] 正面標籤
-- [orange] 警告標籤
-- [purple] 中性標籤
-- [blue] 資訊標籤
-[/tags]
-```
-⚠️ `- [color] text` 必須放在 `[tags]...[/tags]` 內，獨立使用不會套用顏色。
-
-**Summary Grid：**
-```markdown
 [summary]
-- 🏗️ **標題** | 描述文字
-- ⚙️ **標題** | 描述文字
+- **Takeaway** | Practical implication
 [/summary]
 ```
 
-**Insight Box：**
-```markdown
-> **洞察標題**
-> 第一段落內容。
->
-> 第二段落內容（空行分隔）。
-```
+Key rules:
 
-**獨立圖片：**
-```markdown
-![架構示意圖](images/architecture.png)
-```
-- 獨立一行 → 置中顯示，alt 文字自動成為圖說
-- 在段落或列表中使用 → 行內圖片
+- `#` defines main sections; `##` defines subsections; `###` defines cards.
+- Use `### Emoji Title` for teaching cards.
+- Use `> **Title**` blockquotes for insights.
+- Use `[flow]...[/flow]` for processes.
+- Use `[tags]...[/tags]` for colored labels.
+- Use `[summary]...[/summary]` for the final synthesis.
+- Use `` ```prompt [label="..."] `` for prompts, commands, and terminal snippets.
+- Use `![alt](assets/file.ext)` or `[image-text]...[/image-text]` for local images.
+- Use `<!-- TODO: ... -->` for missing source material or suggested images.
+- Before final build, resolve or remove `[visual-prompt]...[/visual-prompt]`; it is a planning artifact, not final page content.
 
-**圖文並排（Image-Text）：**
-```markdown
-[image-text position="left" width="50"]
-![產品截圖](images/screenshot.png)
-這是產品的主要介面，提供了 **直覺式操作** 體驗。
-- 支援拖放操作
-- 即時預覽結果
-[/image-text]
-```
-- `position="left"`（預設）：圖片在左、文字在右
-- `position="right"`：圖片在右、文字在左
-- `width="N"` 設定圖片佔比百分比（預設 40），例如 `width="30"` 或 `width="60"`
-- 文字區域支援段落、粗體、程式碼、連結、列表
-- 響應式：平板（≤ 900px）及手機自動改為上下排列
+When source material includes images or the content clearly needs images:
 
-**YouTube 影片嵌入：**
+1. Search `<course-dir>/assets/` for `*.png`, `*.jpg`, `*.jpeg`, `*.gif`, `*.svg`, and `*.webp`.
+2. Insert the best matching local image.
+3. If no image exists, leave a TODO comment describing the needed image and mention it in the final response.
 
-單行：
-```markdown
-[youtube id="dQw4w9WgXcQ" title="Demo 影片"]
-```
+## General Course Vs Public Briefing
 
-區塊（含說明文字）：
-```markdown
-[youtube id="dQw4w9WgXcQ"]
-這是一段示範影片的說明
-[/youtube]
-```
-- `id` 為 YouTube 影片 ID（網址中 `v=` 後面的值）
-- `title` 為選填標題，顯示在影片下方
-- 影片以 16:9 比例響應式嵌入
-- 本機預覽時若 YouTube iframe 受瀏覽器限制，可改用 YouTube 連結確認內容
+Use **general course mode** when the goal is to teach knowledge, explain concepts, demonstrate skills, or turn a lecture into a self-study page.
 
-完整元件對照請參考：[components.md](reference/components.md)
-Markdown 範例請參考：[content-example.md](reference/content-example.md)
+- Purpose: knowledge transfer, skill decomposition, case teaching.
+- Structure: 3-5 topic sections that gradually build understanding.
+- Writing: concise teaching cards, process flows, examples, prompts, insights, and a final learning summary.
 
-### Step 2：確認或建立課程 Config
+Use **public briefing mode** when the source is a regulation, government report, policy memo, inspection case, meeting material, administrative guidance, ruling request, or when the user explicitly asks for a briefing/deck for decision makers.
 
-#### 2-0：偵測 GitHub Pages 前綴（必須先執行）
+- Purpose: information sync, option recommendation, or decision/ruling.
+- Structure: Context -> Complication -> Resolution.
+- Writing: every `###` title states a conclusion or decision-relevant judgment.
+- Evidence: each law, number, date, agency name, penalty basis, or meeting conclusion gets `<!-- source: ... -->`.
+- Visual principle: visuals guide attention; text preserves evidence.
+- Deck principle: each slide answers one key question.
 
-在撰寫任何 config 之前，先執行以下指令取得 GitHub Pages base URL：
+## Public Briefing Hard Rules
 
-```bash
-git remote get-url origin
-```
+For public-sector content:
 
-解析規則：
-- SSH 格式 `git@github.com:user/repo.git` → `https://user.github.io/repo`
-- HTTPS 格式 `https://github.com/user/repo.git` → `https://user.github.io/repo`
-
-取得 `GH_BASE` 後，`seo.image` 和 `seo.url` 的值即為：
-- `seo.url`：`{GH_BASE}/{course-dir}/`
-- `seo.image`：`{GH_BASE}/{course-dir}/assets/og-image.jpg`（固定檔名，由 generate-og.mjs 輸出）
-
-若指令失敗（非 git repo、無 remote、非 GitHub），直接在 config 中留空這兩個欄位，並告知使用者需手動填入。
-
-Config 分為兩層：
-
-| 檔案 | 用途 | 必要性 |
-|------|------|--------|
-| `config/global.yaml` | 全域設定（講者資訊、社群連結、頁尾） | 首次使用時建立一次 |
-| `<course-dir>/config.yaml` | 課程專屬設定（覆蓋 global） | 每個課程各一份 |
-
-> `config/global.yaml` 不需要放在固定位置，build 會從課程目錄往上搜尋最多 4 層父目錄。只需確保它存在於課程目錄的某個祖層即可。
-
-#### 首次設定：建立 Global Config
-
-如果還沒有 `config/global.yaml`，需要先建立全域設定。可參考 [config-example.yaml](reference/config-example.yaml) 作為模板：
-
-1. 在課程目錄的任意祖層建立 `config/global.yaml`，填入講者資訊、社群連結、頁尾預設值
-2. 在同層建立 `config/assets/` 資料夾，放入講師頭像（檔名為 `author`，副檔名可省略，build 會自動偵測 jpg/jpeg/png/webp/gif/svg）
-
-全域設定的關鍵欄位：
-
-```yaml
-instructor:
-  name: "講者姓名"
-  tagline: "一句話簡介"
-  bio: "講者介紹（支援 <br> 換行）"
-  avatar: "config/assets/author"    # 可省略副檔名
-  stats:                             # text 支援 **粗體** 等 inline markdown
-    - text: "📚 出版 **7** 本專業書籍"
-      url: "https://..."
-  socials:                           # 支援 Medium/Facebook/Threads/YouTube/GitHub/LinkedIn/Email
-    - platform: "YouTube"
-      url: "https://..."
-
-footer:
-  cta: "行動呼籲文字"
-  copyright: "© 你的名字"
-  show_socials: true
-
-seo:
-  site_name: "網站名稱"
-```
-
-#### 課程 Config
-
-每個課程目錄的 `config.yaml` 只需寫要覆蓋全域設定的欄位：
-
-```yaml
-page:
-  title: "課程標題"
-  badge: "BADGE 文字"
-  hero_title: "Hero 大標題<br>支援換行"
-  subtitle: "副標題"
-  subject: "計畫／課程主題（公務簡報可填）"
-  audience: "決策層／聽眾單位（公務簡報可填）"
-  decision_level: "資訊同步／方案建議／決策裁定（公務簡報可填）"
-
-seo:
-  title: "SEO 標題"
-  description: "頁面描述"
-  image: "https://username.github.io/repo/<course-dir>/assets/og-image.jpg"  # 由 Step 2-0 偵測填入
-  url: "https://username.github.io/repo/<course-dir>/"                        # 由 Step 2-0 偵測填入
-
-quotes:
-  opening:
-    text: "開場引言"
-  closing:
-    text: >
-      結尾引言
-```
-
-⚠️ **`seo.image` 必須使用絕對 URL**（`https://...`），社群平台無法解析相對路徑，會導致 OG 預覽圖片無法顯示。這兩個欄位的值應在 Step 2-0 執行 `git remote get-url origin` 後填入。
-
-`nav`（Hero 導覽按鈕）預設從 `content.md` 的 `#` 章節自動產生，不需手動維護。
-若需自訂按鈕文字，可在 config.yaml 中覆蓋：
-
-```yaml
-nav:
-  - text: "自訂文字"
-    href: "#section-id"
-```
-
-YAML 完整範例：[config-example.yaml](reference/config-example.yaml)
-
-### Step 3 + 4：執行 Build 並產生 OG 縮圖（必須連續執行）
-
-> ⚠️ **Step 3 與 Step 4 是綁定的：只要執行了 build，就必須接著產生 OG 縮圖。不可只做 build 而跳過 OG。**
-
-所有指令都從 **repo 根目錄** 執行：
-
-```bash
-# Step 3: Build 課程頁
-node .agents/skills/course-page-generator/scripts/build.mjs <course-dir>
-
-# Step 4: 產生 OG 縮圖（build 成功後立即執行）
-node .agents/skills/course-page-generator/scripts/generate-og.mjs <course-dir>
-```
-
-範例：
-
-```bash
-node .agents/skills/course-page-generator/scripts/build.mjs course/cake
-node .agents/skills/course-page-generator/scripts/generate-og.mjs course/cake
-```
-
-**Step 3 — Build 自動流程：**
-1. 讀取 `config/global.yaml`（base config）
-2. 讀取 `<course-dir>/config.yaml`（deep merge 覆蓋）
-3. 解析 `<course-dir>/content.md`
-4. 套用 HTML 模板 → 填入 TOC / Scroll Spy
-5. 輸出 `<course-dir>/index.html`
-
-**Step 4 — OG 縮圖（build 完成後自動接續）：**
-
-> ⚠️ 此步驟為**必要步驟**，每次 build 完成後都**必須**執行，不可省略。需要 Puppeteer（`npm install --save-dev puppeteer`）。
-
-`generate-og.mjs` 的行為概要：
-
-1. 使用 Puppeteer 開啟 `file://<course-dir>/index.html?og=1`
-   - `?og=1` 會觸發 `base.html` 中的 `og-mode`：
-     - 隱藏 sidebar / footer / 一般內容 section
-     - 只保留 hero 區塊，適合作為社群縮圖
-2. 將 viewport 設為接近手機寬度、較高 `deviceScaleFactor`，輸出 1200×630 截圖
-3. 將結果存到 `<course-dir>/assets/og-*.jpg`，課程 config 的 `seo.image` 應指向該檔案
-
-## Config 合併規則
-
-- **Deep merge**：課程 config 只需寫要覆蓋的欄位
-- **Arrays 整個取代**：例如 `nav` 或 `socials` 在課程 config 有定義時，完整取代全域的
-- **沒有課程 config**：直接使用全域 config
-
-## 轉換指引
-
-**⚠️ 核心原則：講義是傳遞資訊的載體，請「萃取重點」而非「逐字轉錄」。**
-請忽略口語化的過場詞（如：大家好、接下來我們看、老實說）、贅字與講者自我呢喃，直接將講稿「提煉」成結構化的條列重點、圖表或卡片。
-
-公務簡報模式另有四項硬性規則：
-
-1. **敘事採 Context → Complication → Resolution** — 先說背景與決策情境，再說矛盾、風險或缺口，最後提出解方、裁示事項或後續作為。
-2. **標題即結論** — `###` 標題必須具有決策參考價值。例如「預算狀況」應改為「預算餘額足以支應第四季擴大辦理」。
-3. **嚴格溯源，前端隱藏** — 所有法規、數據、日期、會議結論與裁罰依據，都以 `<!-- source: ... -->` 保留來源；輸出 HTML 不顯示。
-4. **視覺描述實施後場景** — 若需要 AI 產圖，`[visual-prompt]` 應描述政策或建設完成後的具體樣貌，不使用抽象裝飾語。
-
-當使用者提供原始講稿時，AI 應該：
-
-1. **萃取章節結構** — 移除口語過場，找出核心主題的轉換點，對應到 `#` 主章節與 `##` 子章節。
-2. **資訊卡片化（極其重要）** — 將長篇大論的解說，提煉成精簡的 `### Emoji Title` 卡片與條列式列表，不要把講稿的段落直接複製貼上。
-   - **原則：所有內容都應該落在結構化元件內**（卡片、Insight、Flow、Tags 等），避免出現裸段落（`loose-text`）。
-   - ❌ 錯誤示範：直接把講稿貼成段落
-     ```markdown
-     一開始我把課程大綱交給 AI，第一版完成度很高。
-     但 AI 會自己增減文字，想修改時得回去改 HTML。
-     ```
-   - ✅ 正確做法：提煉成卡片 + Insight
-     ```markdown
-     ### 💡 第一版很快，但改不動
-     - 把課程大綱直接交給 AI，第一版完成度很高
-     - 但 AI 會自行增減文字、改變強調方式
-     - 想修改時，得回去改 HTML 原始碼
-
-     > **不能只停留在 AI 幫我生成第一版**
-     > 講義要維護的是內容，不是 HTML。
-     ```
-3. **標記指令與操作** — 程式碼、CLI 指令、Prompt 範例，用 `` ```prompt `` 包裹。
-4. **整理流程步驟** — 講述到操作或邏輯步驟時，將其整理成清晰的 `[flow]...[/flow]`。
-5. **提煉深度觀點** — 將講稿中的核心洞察、反思或重要結論，轉為 `> **Title**` Insight Box 點出。
-6. **產生總結** — 最後一個段落請直接用 `[summary]...[/summary]` 歸納本次課程精華。
-7. **確認開場與結尾引言** — 檢查課程 `config.yaml`（或 `global.yaml`）是否已設定 `quotes.opening` 和 `quotes.closing`。若尚未設定，根據講稿的核心精神各撰寫一段引言，寫入 `config.yaml`。開場引言出現在講師介紹之後、第一個章節之前；結尾引言出現在所有章節之後、頁尾之前，用於收束整場課程的訊息。
-8. **公務內容檢查** — 若是公務簡報，逐頁檢查是否符合「一頁一問題、一標題一結論、一數據一來源」。
-9. **搜尋並插入圖片** — 當內容適合搭配圖片時（架構圖、截圖、流程圖等），主動用 Glob 工具搜尋 `<course-dir>/assets/` 資料夾中的圖片檔（`*.png`, `*.jpg`, `*.jpeg`, `*.gif`, `*.svg`, `*.webp`）。
-   - **找到匹配圖片**：根據檔名判斷最適合的圖片，插入對應的 `![alt](assets/filename)` 或 `[image-text]` 區塊。
-   - **找不到圖片**：在該處插入 HTML 註解標記，格式為 `<!-- TODO: 建議在此加入圖片：{圖片描述}，請將圖片放到 assets/ 資料夾 -->`，同時在回覆中彙整所有缺圖位置，提醒使用者補充。
-   - **assets 資料夾不存在**：提醒使用者建立 `<course-dir>/assets/` 並放入相關圖片。
-10. **驗證格式** — 對照 [components.md](reference/components.md) 確認語法正確。
-
-## Reference Files
-
-- 元件對照：[components.md](reference/components.md)
-- 視覺規格：[design-spec.md](reference/design-spec.md)
-- YAML 範例：[config-example.yaml](reference/config-example.yaml)
-- Markdown 範例：[content-example.md](reference/content-example.md)
-- HTML 模板：[base.html](reference/base.html)
+1. Use decision-oriented titles, not topic labels.
+   - Prefer: `### 預算餘額足以支應第四季擴大辦理`
+   - Avoid: `### 預算狀況`
+2. Keep traceability in `content.md` with hidden source comments.
+3. Do not invent numbers, legal interpretations, agencies, decisions, or examples.
+4. Use charts only when the source has real quantitative data.
+5. Prefer action cards, comparison matrices, before/after framing, and workflows when quantitative data is absent.
+6. The final `[summary]` must synthesize takeaways and next actions.
 
 ## HTML Deck Mode
 
-Use the normal course-page flow by default: convert source material to `content.md`, build `<course-dir>/index.html`, then generate the OG image.
+Use the normal course-page flow by default.
 
-Use HTML deck mode only when the user explicitly asks for HTML slides, interactive web slides, a shareable slide deck, Chart.js/table/decision-tree slides, or a presentation that should be separate from the long-form course page.
+Use HTML Deck Mode only when the user explicitly asks for HTML slides, interactive web slides, a shareable slide deck, Chart.js/table/decision-tree slides, or a presentation separate from the long-form page.
 
-Deck mode still starts from `content.md` as the single knowledge master. First create or update `<course-dir>/content.md`, then derive `slides.html` from that file. The deck may compress, reorder, and rewrite the material for live presentation, but it must not add claims, examples, decisions, or conclusions that conflict with or are unsupported by `content.md`.
+Deck mode rules:
 
-For public-sector presentation work, derive the deck from the same `content.md` using the public briefing blueprint:
-- Use decision-oriented slide titles instead of topic labels.
-- Preserve hidden evidence comments in `content.md`, but do not render them in `slides.html`.
-- Use charts only when the source has real quantitative data; otherwise prefer action cards, process flow, comparison matrix, or before/after framing.
+- `content.md` remains the single source of truth.
+- Create or update `content.md` before deriving `slides.html`.
+- The deck may compress, reorder, and rewrite wording for live presentation.
+- The deck must not add claims, examples, decisions, or conclusions unsupported by `content.md`.
+- Use [html-deck-mode.md](reference/html-deck-mode.md) and start from [deck-template.html](reference/deck-template.html).
+- Produce one standalone `<course-dir>/slides.html` with inline CSS/JS and local images referenced relative to `slides.html`.
+
+For public-sector decks:
+
+- Preserve source comments in `content.md`, but do not render them in `slides.html`.
+- Use charts only with real data.
 - The closing slide must synthesize `[summary]` into takeaways and next actions.
 
-Deck mode is intentionally separate from `reference/base.html`. Do not rely on the course page template's former presentation or print/PDF behavior. Start from `reference/deck-template.html`, follow `reference/html-deck-mode.md`, and produce one standalone `<course-dir>/slides.html` with inline CSS/JS and local images referenced relative to `slides.html`.
+## Reference Files
 
-Deck mode references:
-
+- Component syntax and rendering: [components.md](reference/components.md)
+- Visual design rules: [design-spec.md](reference/design-spec.md)
+- Config fields and examples: [config-example.yaml](reference/config-example.yaml)
+- Markdown example: [content-example.md](reference/content-example.md)
+- Course page template: [base.html](reference/base.html)
 - HTML deck rules: [html-deck-mode.md](reference/html-deck-mode.md)
 - Standalone deck template: [deck-template.html](reference/deck-template.html)

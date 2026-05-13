@@ -40,36 +40,36 @@
     }
 
     :root {
-      --bg: #0f1117;
-      --bg-card: #181b25;
-      --bg-card-alt: #1e2130;
-      --text: #e4e4e7;
-      --text-dim: #8b8d9a;
-      --accent: #e8845a;
-      --accent-rgb: 232 132 90;
-      --accent2: #e8b878;
-      --accent2-rgb: 232 184 120;
-      --accent3: #e08898;
-      --accent3-rgb: 224 136 152;
-      --border: #2a2d3a;
-      --code-bg: #12141c;
-      --radius: 12px;
+      --bg: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-alt: #f2f2f2;
+      --text: #111111;
+      --text-dim: #555555;
+      --accent: #e10600;
+      --accent-rgb: 225 6 0;
+      --accent2: #111111;
+      --accent2-rgb: 17 17 17;
+      --accent3: #777777;
+      --accent3-rgb: 119 119 119;
+      --border: #d8d8d8;
+      --code-bg: #f2f2f2;
+      --radius: 8px;
     }
 
     [data-theme="light"] {
-      --bg: #f5f5f7;
+      --bg: #ffffff;
       --bg-card: #ffffff;
-      --bg-card-alt: #f0f0f3;
-      --text: #1a1a2e;
-      --text-dim: #5a5b6a;
-      --accent: #c45c28;
-      --accent-rgb: 196 92 40;
-      --accent2: #9a7028;
-      --accent2-rgb: 154 112 40;
-      --accent3: #b04860;
-      --accent3-rgb: 176 72 96;
-      --border: #d4d4d8;
-      --code-bg: #eaeaef;
+      --bg-card-alt: #f2f2f2;
+      --text: #111111;
+      --text-dim: #555555;
+      --accent: #e10600;
+      --accent-rgb: 225 6 0;
+      --accent2: #111111;
+      --accent2-rgb: 17 17 17;
+      --accent3: #777777;
+      --accent3-rgb: 119 119 119;
+      --border: #d8d8d8;
+      --code-bg: #f2f2f2;
     }
 
     html {
@@ -85,7 +85,7 @@
       background: var(--bg);
       color: var(--text);
       font-family: 'Noto Sans TC', sans-serif;
-      line-height: 1.8;
+      line-height: 1.6;
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
     }
@@ -124,37 +124,40 @@
 
     /* ===== HERO ===== */
     .hero {
-      min-height: 100vh;
+      min-height: 92vh;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      text-align: center;
-      padding: 2rem;
+      text-align: left;
+      padding: 6rem min(8vw, 7rem) 5rem;
       position: relative;
       overflow: clip;
       width: 100%;
+      background:
+        linear-gradient(90deg, rgb(var(--accent-rgb) / .08) 0 1px, transparent 1px) 0 0 / 72px 72px,
+        var(--bg);
     }
 
     .hero::before {
       content: '';
       position: absolute;
-      top: -30%;
-      left: -20%;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgb(var(--accent-rgb) / .12) 0%, transparent 70%);
+      top: 0;
+      left: min(8vw, 7rem);
+      width: 92px;
+      height: 8px;
+      background: var(--accent);
       pointer-events: none;
     }
 
     .hero::after {
       content: '';
       position: absolute;
-      bottom: -20%;
-      right: -10%;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgb(var(--accent2-rgb) / .08) 0%, transparent 70%);
+      bottom: 3rem;
+      right: min(8vw, 7rem);
+      width: min(38vw, 420px);
+      height: 1px;
+      background: var(--text);
       pointer-events: none;
     }
 
@@ -164,12 +167,12 @@
       gap: .5rem;
       padding: .4rem 1rem;
       border: 1px solid var(--border);
-      border-radius: 100px;
+      border-radius: var(--radius);
       font-size: .8rem;
       color: var(--text-dim);
       letter-spacing: .05em;
       margin-bottom: 2rem;
-      backdrop-filter: blur(4px);
+      background: var(--bg-card);
     }
 
     .hero-badge .dot {
@@ -177,50 +180,37 @@
       height: 6px;
       border-radius: 50%;
       background: var(--accent);
-      animation: pulse 2s infinite
-    }
-
-    @keyframes pulse {
-
-      0%,
-      100% {
-        opacity: 1
-      }
-
-      50% {
-        opacity: .3
-      }
+      animation: none
     }
 
     .hero h1 {
-      font-family: 'Noto Serif TC', serif;
-      font-size: clamp(2.2rem, 5vw, 4rem);
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: clamp(3rem, 8vw, 6.8rem);
       font-weight: 900;
-      line-height: 1.3;
+      line-height: .98;
       margin-bottom: 1.5rem;
       max-width: 100%;
-      width: 100%;
+      width: min(1100px, 100%);
       word-break: break-word;
       overflow-wrap: anywhere;
       white-space: normal;
-      background: linear-gradient(135deg, var(--text) 30%, var(--accent) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      padding: 0.08em 0.2em 0.16em;
+      color: var(--text);
+      background: none;
+      -webkit-text-fill-color: currentColor;
+      padding: 0;
     }
 
     .hero-sub {
       font-size: clamp(1rem, 2vw, 1.2rem);
       color: var(--text-dim);
-      max-width: 600px;
+      max-width: 680px;
       margin-bottom: 1rem;
-      font-weight: 300
+      font-weight: 400
     }
 
     .hero-author {
       font-size: .95rem;
-      color: var(--accent);
+      color: var(--text);
       font-weight: 500;
       margin-bottom: 3rem
     }
@@ -229,12 +219,12 @@
       display: flex;
       flex-wrap: wrap;
       gap: .75rem;
-      justify-content: center
+      justify-content: flex-start
     }
 
     .hero-nav a {
       padding: .65rem 1.4rem;
-      border-radius: 100px;
+      border-radius: var(--radius);
       font-size: .85rem;
       font-weight: 500;
       text-decoration: none;
@@ -270,9 +260,9 @@
       display: inline-flex;
       align-items: center;
       gap: .5rem;
-      font-size: 1.5rem;
+      font-size: 1rem;
       font-weight: 700;
-      letter-spacing: .1em;
+      letter-spacing: 0;
       text-transform: uppercase;
       color: var(--accent);
       margin-bottom: 1rem;
@@ -285,17 +275,18 @@
       width: 28px;
       height: 28px;
       border-radius: 6px;
-      background: rgb(var(--accent-rgb) / .15);
+      background: var(--accent);
+      color: #fff;
       font-size: 1.2rem;
       padding-left: 3px;
       padding-bottom: 1px;
     }
 
     .section h2 {
-      font-family: 'Noto Serif TC', serif;
-      font-size: clamp(1.9rem, 4vw, 2.8rem);
-      font-weight: 700;
-      line-height: 1.3;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: clamp(2.1rem, 4.5vw, 3.6rem);
+      font-weight: 900;
+      line-height: 1.08;
       margin-bottom: .75rem;
     }
 
@@ -303,8 +294,8 @@
       font-size: 1.05rem;
       color: var(--text-dim);
       margin-bottom: 2.5rem;
-      padding-left: 1rem;
-      border-left: 3px solid var(--accent);
+      padding-left: 1.25rem;
+      border-left: 6px solid var(--accent);
     }
 
     .divider {
@@ -321,15 +312,16 @@
       border-radius: var(--radius);
       padding: 1.75rem;
       margin-bottom: 1.5rem;
-      transition: border-color .3s;
+      transition: border-color .3s, transform .3s;
     }
 
     .card:hover {
-      border-color: rgb(var(--accent-rgb) / .3)
+      border-color: var(--accent);
+      transform: translateY(-2px);
     }
 
     .card h3 {
-      font-family: 'Noto Serif TC', serif;
+      font-family: 'Noto Sans TC', sans-serif;
       font-size: 1.2rem;
       font-weight: 700;
       margin-bottom: .75rem;
@@ -351,7 +343,7 @@
       position: relative;
       padding-left: 1.2rem;
       margin-bottom: .5rem;
-      color: var(--text-dim);
+      color: var(--text);
       font-size: .95rem
     }
 
@@ -363,11 +355,11 @@
       width: 5px;
       height: 5px;
       border-radius: 50%;
-      background: var(--accent2)
+      background: var(--accent)
     }
 
     .card p {
-      color: var(--text-dim);
+      color: var(--text);
       font-size: .95rem
     }
 
@@ -379,8 +371,8 @@
       font-size: 1rem;
       font-weight: 800;
       line-height: 1.5;
-      letter-spacing: .01em;
-      color: var(--accent2);
+      letter-spacing: 0;
+      color: var(--text);
     }
 
     .minor-title::before {
@@ -406,7 +398,7 @@
     }
 
     .group-header {
-      font-family: 'Noto Serif TC', serif;
+      font-family: 'Noto Sans TC', sans-serif;
       font-size: 1.1rem;
       font-weight: 700;
       padding: .9rem 1.75rem;
@@ -811,8 +803,8 @@
       text-align: center;
       color: var(--text);
       background:
-        radial-gradient(circle at top, rgb(var(--accent-rgb) / .18), transparent 55%),
-        linear-gradient(135deg, rgb(var(--accent-rgb) / .14), rgb(var(--accent2-rgb) / .08));
+        linear-gradient(90deg, var(--accent) 0 6px, transparent 6px),
+        var(--bg-card-alt);
     }
 
     .youtube-local-notice p {
@@ -1011,8 +1003,8 @@
       grid-template-rows: auto auto;
       column-gap: 1rem;
       row-gap: .15rem;
-      background: linear-gradient(135deg, rgb(var(--accent-rgb) / .05), rgb(var(--accent2-rgb) / .03));
-      border: 1px solid rgb(var(--accent-rgb) / .12);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 1.25rem 1.5rem;
       transition: all .3s ease;
@@ -1027,7 +1019,7 @@
       top: 0;
       bottom: 0;
       width: 3px;
-      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      background: var(--accent);
       border-radius: 3px 0 0 3px;
     }
 
@@ -1053,7 +1045,7 @@
     }
 
     .summary-card h4 {
-      font-family: 'Noto Serif TC', serif;
+      font-family: 'Noto Sans TC', sans-serif;
       font-size: 1rem;
       font-weight: 700;
       margin-bottom: 0;
@@ -1160,7 +1152,7 @@
     }
 
     .instructor-info h3 {
-      font-family: 'Noto Serif TC', serif;
+      font-family: 'Noto Sans TC', sans-serif;
       font-size: 1.3rem;
       font-weight: 700;
       margin-bottom: .25rem
@@ -1297,7 +1289,9 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(ellipse 60% 50% at 20% 40%, rgb(var(--accent-rgb) / .06) 0%, transparent 70%), radial-gradient(ellipse 50% 60% at 80% 60%, rgb(var(--accent2-rgb) / .05) 0%, transparent 70%);
+      background:
+        linear-gradient(90deg, transparent 0 46%, rgb(var(--accent-rgb) / .08) 46% 46.5%, transparent 46.5%),
+        var(--bg);
       pointer-events: none;
     }
 
@@ -1307,7 +1301,7 @@
     }
 
     .quote-page .quote-mark {
-      font-family: 'Noto Serif TC', serif;
+      font-family: 'Noto Sans TC', sans-serif;
       font-size: clamp(4rem, 10vw, 8rem);
       line-height: 1;
       color: var(--accent);
@@ -1319,7 +1313,7 @@
     }
 
     .quote-page blockquote {
-      font-family: 'Noto Serif TC', serif;
+      font-family: 'Noto Sans TC', sans-serif;
       font-size: clamp(1.6rem, 4vw, 2.6rem);
       font-weight: 700;
       line-height: 1.9;
@@ -1332,11 +1326,11 @@
       margin-top: 2rem;
       font-size: .85rem;
       color: var(--text-dim);
-      letter-spacing: .08em
+      letter-spacing: 0
     }
 
     .quote-page .quote-line {
-      width: 50%;
+      width: min(420px, 50%);
       height: 2px;
       background: var(--accent);
       border-radius: 1px;
@@ -1354,7 +1348,7 @@
 
     /* ===== SUB-TITLE ===== */
     .sub-title {
-      font-family: 'Noto Serif TC', serif;
+      font-family: 'Noto Sans TC', sans-serif;
       font-size: 1.5rem;
       font-weight: 700;
       margin: 3.5rem 0 1.5rem;
@@ -1510,7 +1504,7 @@
     }
 
     .sidebar-brand-title {
-      font-family: 'Noto Serif TC', serif;
+      font-family: 'Noto Sans TC', sans-serif;
       font-size: 1rem;
       font-weight: 700;
       color: var(--accent);
@@ -1971,7 +1965,7 @@
       content: '';
       position: absolute;
       inset: -40%;
-      background: radial-gradient(circle, color-mix(in srgb, var(--accent) 22%, transparent) 0%, transparent 62%);
+      background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%);
       opacity: 0;
       pointer-events: none;
       transform: scale(.75);
@@ -2216,11 +2210,11 @@
     }
 
     [data-theme="light"] .hero::before {
-      background: radial-gradient(circle, rgb(var(--accent-rgb) / .08) 0%, transparent 70%)
+      background: var(--accent)
     }
 
     [data-theme="light"] .hero::after {
-      background: radial-gradient(circle, rgb(var(--accent2-rgb) / .06) 0%, transparent 70%)
+      background: var(--text)
     }
 
     [data-theme="light"] .card:hover {
@@ -2351,7 +2345,7 @@
     }
 
     .bonus-modal-header h3 {
-      font-family: 'Noto Serif TC', serif;
+      font-family: 'Noto Sans TC', sans-serif;
       font-size: 1.05rem;
       font-weight: 700;
       color: var(--accent)
@@ -2603,28 +2597,18 @@
     <div class="settings-section">
       <div class="settings-label">主題色彩</div>
       <div class="color-swatches" id="color-swatches">
-        <button class="color-swatch" data-theme-id="coral" title="暖陽珊瑚" data-accent="#e8845a"
-          data-accent-light="#c45c28" data-accent2="#e8b878" data-accent2-light="#9a7028" data-accent3="#e08898"
-          data-accent3-light="#b04860"
-          style="background:linear-gradient(135deg,#e8845a 40%,#e8b878 70%,#e08898)"></button>
-        <button class="color-swatch" data-theme-id="ocean" title="深海藍" data-accent="#60a5fa" data-accent-light="#2563eb"
-          data-accent2="#5eead4" data-accent2-light="#0d9488" data-accent3="#a5b4fc" data-accent3-light="#6366f1"
-          style="background:linear-gradient(135deg,#60a5fa 40%,#5eead4 70%,#a5b4fc)"></button>
-        <button class="color-swatch" data-theme-id="forest" title="翡翠森林" data-accent="#50d890"
-          data-accent-light="#15803d" data-accent2="#c8d858" data-accent2-light="#6a7a18" data-accent3="#50c0a8"
-          data-accent3-light="#0d7060"
-          style="background:linear-gradient(135deg,#50d890 40%,#c8d858 70%,#50c0a8)"></button>
-        <button class="color-swatch" data-theme-id="galaxy" title="星河紫" data-accent="#a78bfa"
-          data-accent-light="#7c3aed" data-accent2="#e8a8e0" data-accent2-light="#a21caf" data-accent3="#7db8f8"
-          data-accent3-light="#2563eb"
-          style="background:linear-gradient(135deg,#a78bfa 40%,#e8a8e0 70%,#7db8f8)"></button>
-        <button class="color-swatch" data-theme-id="sakura" title="花見櫻" data-accent="#f472b6"
-          data-accent-light="#db2777" data-accent2="#b0a8f0" data-accent2-light="#6d28d9" data-accent3="#f0a8a0"
-          data-accent3-light="#c05050"
-          style="background:linear-gradient(135deg,#f472b6 40%,#b0a8f0 70%,#f0a8a0)"></button>
-        <button class="color-swatch" data-theme-id="amber" title="琥珀" data-accent="#f0b840" data-accent-light="#a87808"
-          data-accent2="#e09870" data-accent2-light="#a86040" data-accent3="#c8b080" data-accent3-light="#887048"
-          style="background:linear-gradient(135deg,#f0b840 40%,#e09870 70%,#c8b080)"></button>
+        <button class="color-swatch" data-theme-id="magazine" title="Modern Magazine" data-accent="#e10600"
+          data-accent-light="#e10600" data-accent2="#111111" data-accent2-light="#111111" data-accent3="#777777"
+          data-accent3-light="#777777"
+          style="background:linear-gradient(135deg,#e10600 0 38%,#111111 38% 72%,#f2f2f2 72%)"></button>
+        <button class="color-swatch" data-theme-id="mono" title="黑白編輯" data-accent="#111111"
+          data-accent-light="#111111" data-accent2="#e10600" data-accent2-light="#e10600" data-accent3="#777777"
+          data-accent3-light="#777777"
+          style="background:linear-gradient(135deg,#111111 0 50%,#ffffff 50% 76%,#e10600 76%)"></button>
+        <button class="color-swatch" data-theme-id="neutral" title="中性雜誌" data-accent="#d21f1b"
+          data-accent-light="#d21f1b" data-accent2="#222222" data-accent2-light="#222222" data-accent3="#8a8a8a"
+          data-accent3-light="#8a8a8a"
+          style="background:linear-gradient(135deg,#d21f1b 0 34%,#222222 34% 68%,#f2f2f2 68%)"></button>
       </div>
     </div>
     <div class="settings-divider"></div>
@@ -3043,7 +3027,7 @@
           });
         } catch (e) { }
       } else {
-        var firstSwatch = document.querySelector('.color-swatch[data-theme-id="coral"]');
+        var firstSwatch = document.querySelector('.color-swatch[data-theme-id="magazine"]');
         if (firstSwatch) firstSwatch.classList.add('selected');
       }
 

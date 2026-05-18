@@ -1,7 +1,13 @@
 # ===================================================
 # Course Page Generator — YAML Config 完整範例
-# 可作為 global.yaml 或課程 config.yaml 的參考
-# 課程 config 只需寫要覆蓋的欄位（deep merge）
+# 每個課程資料夾必須有：
+# - <course-dir>/config/global.yaml  共用設定：instructor、socials、footer、shared SEO、favicon、avatar
+# - <course-dir>/config.yaml         課程覆蓋：page、quotes、nav、course SEO、source
+# 產生器只讀課程資料夾內的 config/global.yaml，不讀父層 config/global.yaml。
+# 新課程或缺少 global.yaml 的課程，應自動從唯讀來源複製：
+# C:\Users\bbcx1\agent-skill-lecture-builder\config\global.yaml
+# C:\Users\bbcx1\agent-skill-lecture-builder\config\assets\
+# 課程 config.yaml 只需寫要覆蓋的欄位（deep merge）
 # 視覺系統主要定義在 reference/base.html、reference/deck-template.html
 # 若要調整品牌感，請優先修改模板與 reference/design-spec.md，而不是在 YAML 內硬塞色碼
 # ===================================================

@@ -333,8 +333,49 @@ openspec init</div>
 - 影片以 16:9 比例響應式嵌入
 - 本機預覽時若 iframe 受瀏覽器限制，改用 YouTube 連結確認內容
 - 整個區塊包在 `<div class="reveal">` 中
+- YouTube embed 作為備援：只有在沒有可用本地 MP4、MP4 無法取得，或使用者明確要求時，才使用 `[youtube]`
 
-## 13. Inline Elements
+## 13. Local Video（本地 MP4 優先）
+
+**Markdown：**
+```markdown
+[video src="assets/videos/demo.mp4" title="示範影片"]
+```
+
+**HTML：**
+```html
+<figure class="media-video">
+  <video controls preload="metadata" src="assets/videos/demo.mp4"></video>
+  <figcaption>示範影片</figcaption>
+</figure>
+```
+
+規則：
+- 有可用本地 MP4 時，優先使用 `[video]`
+- 本地影片應放在 `assets/videos/`
+- 檔名使用安全英文 kebab-case，避免空白、`#`、長中文檔名或特殊符號
+- 若同時有 YouTube URL 與本地 MP4，優先放 `[video]`，YouTube embed 或連結只作為備援/來源參考
+
+## 14. Action Button（外部動作按鈕）
+
+**Markdown：**
+```markdown
+[button href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" label="在 YouTube 開啟原始影片"]
+```
+
+**HTML：**
+```html
+<p class="action-button-row">
+  <a class="action-button" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener">在 YouTube 開啟原始影片</a>
+</p>
+```
+
+規則：
+- 用於重要外部來源，例如 YouTube 原始影片、官方法規、表單或補充資料
+- 不要用於一般段落中的普通參考連結
+- label 必須是明確行動語句，例如 `在 YouTube 開啟原始影片`
+
+## 15. Inline Elements
 
 | Markdown | HTML | 說明 |
 |---|---|---|

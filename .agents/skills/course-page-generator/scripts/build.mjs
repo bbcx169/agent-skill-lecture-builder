@@ -7,7 +7,7 @@
  *   node build.mjs <course-dir>/content.md  # explicit content path
  *
  * Config layering:
- *   1. config/global.yaml  (base — instructor, socials, footer, defaults)
+ *   1. <course-dir>/config/global.yaml  (base — instructor, socials, footer, defaults)
  *   2. <course-dir>/config.yaml  (override — page, quotes, nav, etc.)
  *   Deep merge: course config wins on conflict, arrays are replaced not appended.
  *
@@ -332,6 +332,28 @@ function parseContent(md) {
         i++;
       }
       if (current && vid) current.blocks.push({ type: 'youtube', id: vid, caption });
+      continue;
+    }
+
+    // ── local video embed ──
+    if (/^\[video/.test(line.trim())) {
+      const srcMatch = line.match(/src="([^"]+)"/);
+      const titleMatch = line.match(/title="([^"]+)"/);
+      const src = srcMatch ? srcMatch[1] : '';
+      const title = titleMatch ? titleMatch[1] : '';
+      if (current && src) current.blocks.push({ type: 'video', src, title });
+      i++;
+      continue;
+    }
+
+    // ── external link button ──
+    if (/^\[button/.test(line.trim())) {
+      const hrefMatch = line.match(/href="([^"]+)"/);
+      const labelMatch = line.match(/label="([^"]+)"/);
+      const href = hrefMatch ? hrefMatch[1] : '';
+      const label = labelMatch ? labelMatch[1] : '';
+      if (current && href) current.blocks.push({ type: 'button', href, label });
+      i++;
       continue;
     }
 
@@ -950,6 +972,15 @@ ${childrenHtml}
     case 'paragraph':
       return `<p class="loose-text">${block.text}</p>`;
 
+    case 'video':
+      return `<figure class="media-video">
+      <video controls preload="metadata" src="${esc(block.src)}"></video>
+      ${block.title ? `<figcaption>${esc(block.title)}</figcaption>` : ''}
+    </figure>`;
+
+    case 'button':
+      return `<p class="action-button-row"><a class="action-button" href="${esc(block.href)}" target="_blank" rel="noopener">${esc(block.label || 'Open link')}</a></p>`;
+
     default:
       return '';
   }
@@ -997,15 +1028,8 @@ function buildFooterSocials(cfg) {
 // ─── Config loading with layering ───
 
 function findGlobalConfig(courseDir) {
-  let dir = dirname(courseDir);
-  for (let i = 0; i < 4; i++) {
-    const candidate = join(dir, 'config/global.yaml');
-    if (existsSync(candidate)) return candidate;
-    const parent = dirname(dir);
-    if (parent === dir) break;
-    dir = parent;
-  }
-  return null;
+  const candidate = join(courseDir, 'config/global.yaml');
+  return existsSync(candidate) ? candidate : null;
 }
 
 function loadConfig(courseDir) {
@@ -1013,12 +1037,14 @@ function loadConfig(courseDir) {
   let globalRoot = dirname(courseDir);
 
   const globalConfig = findGlobalConfig(courseDir);
-  if (globalConfig) {
-    const globalRaw = readFileSync(globalConfig, 'utf-8');
-    cfg = parseYamlFull(globalRaw);
-    globalRoot = dirname(dirname(globalConfig)); // dir containing config/
-    console.log(`   Global config: ${globalConfig}`);
+  if (!globalConfig) {
+    throw new Error(`Missing required global config: ${join(courseDir, 'config/global.yaml')}`);
   }
+
+  const globalRaw = readFileSync(globalConfig, 'utf-8');
+  cfg = parseYamlFull(globalRaw);
+  globalRoot = courseDir;
+  console.log(`   Global config: ${globalConfig}`);
 
   const courseConfig = join(courseDir, 'config.yaml');
   if (existsSync(courseConfig)) {
@@ -1218,7 +1244,7 @@ if (process.argv[1] === __build_filename) {
     console.log('  node build.mjs <course-dir>/content.md  # explicit content path');
     console.log('');
     console.log('Config layering:');
-    console.log('  1. config/global.yaml     (base: instructor, socials, footer)');
+    console.log('  1. <course-dir>/config/global.yaml  (base: instructor, socials, footer)');
     console.log('  2. <course-dir>/config.yaml  (override: page, quotes, nav)');
     process.exit(1);
   }

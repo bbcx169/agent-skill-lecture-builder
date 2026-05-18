@@ -79,12 +79,16 @@ agent-skill-lecture-builder/
 │               ├── components.md
 │               ├── design-spec.md
 │               ├── html-deck-mode.md
+│               ├── media-workflow.md
 │               ├── deck-template.html
 │               └── config-example.yaml
 ├── config/
-│   ├── global.yaml          # 全域設定（講者、社群、頁尾）
-│   └── assets/              # 共用圖片（avatar 等）
+│   ├── global.yaml          # 固定來源設定模板（講者、社群、頁尾；不可直接修改產出課程時的複本）
+│   └── assets/              # 固定來源共用圖片（avatar 等）
 ├── example/                 # 課程目錄示意（建立後會包含下列檔案）
+│   ├── config/
+│   │   ├── global.yaml      # 每個課程資料夾必備，由固定來源複製
+│   │   └── assets/          # 每個課程資料夾的全域設定素材複本
 │   ├── config.yaml          # 課程專屬設定（覆蓋 global）
 │   ├── content.md           # 結構化 Markdown 講稿
 │   ├── index.html           # build 產出
@@ -97,12 +101,13 @@ agent-skill-lecture-builder/
 ## 新增一門課程
 
 ```bash
-mkdir -p my-course/assets
+mkdir -p my-course/config my-course/assets
 ```
 
-1. **建立 `my-course/content.md`** — 用約定的 Markdown 語法撰寫講稿（或丟原始筆記給 AI，觸發 Skill 自動轉換）
-2. **建立 `my-course/config.yaml`** — 只需寫要覆蓋全域設定的欄位
-3. **Build**
+1. **準備 `my-course/config/global.yaml`** — 每個課程資料夾必備。使用 Skill 時，若缺少此檔，應自動從 `C:\Users\bbcx1\agent-skill-lecture-builder\config` 複製 `global.yaml` 與 `assets/` 到課程資料夾內的 `config/`
+2. **建立 `my-course/content.md`** — 用約定的 Markdown 語法撰寫講稿（或丟原始筆記給 AI，觸發 Skill 自動轉換）
+3. **建立 `my-course/config.yaml`** — 只需寫要覆蓋全域設定的欄位
+4. **Build**
 
 ```bash
 node .agents/skills/course-page-generator/scripts/build.mjs my-course
@@ -179,14 +184,16 @@ The normal course page flow still uses `content.md` + `config.yaml` to generate 
 
 | 層級 | 檔案 | 內容 |
 |------|------|------|
-| 全域 | `config/global.yaml` | 講者資訊、社群連結、頁尾 |
+| 全域 | `<dir>/config/global.yaml` | 講者資訊、社群連結、頁尾 |
 | 課程 | `<dir>/config.yaml` | 頁面標題、badge、hero、引言、導覽按鈕 |
 
 課程 config 只需寫要覆蓋的欄位，其餘繼承全域。陣列欄位（如 `socials`）會整個取代。
 
 `nav`（Hero 導覽按鈕）預設從 `content.md` 的 `#` 章節自動產生，不需在 config 維護。
 
-`config/global.yaml` 不必放在固定位置。Build 會從課程目錄往上搜尋最多 4 層父目錄，找到第一個 `config/global.yaml` 就使用。
+`config/global.yaml` 必須位於課程資料夾內。Build 只讀取 `<dir>/config/global.yaml`，不再往父層搜尋，也不直接引用專案根目錄的 `config/global.yaml`。
+
+固定來源為 `C:\Users\bbcx1\agent-skill-lecture-builder\config`。建立新課程或發現課程缺少 `config/global.yaml` 時，Skill 應從固定來源複製 `global.yaml` 與 `assets/` 到 `<dir>/config/`；固定來源檔案只作為模板，不可在課程產出流程中修改。
 
 ### Global config 範例
 
@@ -269,7 +276,9 @@ quotes:
 | `- [x] item` | 勾選清單（僅用於已驗證/已完成的事項，不適合一般觀點條列） |
 | `![alt](src)` | 獨立圖片（置中、含說明文字） |
 | `[image-text]...[/image-text]` | 圖文並排（圖片＋文字左右排列，預設圖片佔 40%） |
-| `[youtube id="..." title="..."]` | YouTube 影片嵌入（16:9 響應式） |
+| `[video src="..." title="..."]` | 本地 MP4 影片嵌入（優先使用，16:9 響應式） |
+| `[youtube id="..." title="..."]` | YouTube 影片嵌入（備援使用，16:9 響應式） |
+| `[button href="..." label="..."]` | 外部連結行動按鈕 |
 | `---` | 章節分隔線 |
 
 詳細語法與 HTML 對照見 [`components.md`](./.agents/skills/course-page-generator/reference/components.md)。
@@ -298,14 +307,35 @@ quotes:
 - 文字區域支援段落、粗體、程式碼、連結、列表
 - 平板（≤ 900px）及手機自動改為上下排列
 
-### YouTube 影片嵌入
+### DOCX / PDF 圖片抽取
 
-**單行（帶標題）：**
+DOCX/PDF 來源圖片應抽到 `assets/<source-stem>/`，檔名需穩定、可追溯來源，例如 `assets/08-guidance/08-guidance-01.jpg` 或 `assets/09-supplement/09-page8-image-01.jpg`。
+
+- DOCX 圖片依文件順序抽取，放到對應小節附近
+- PDF 圖片依頁碼與圖像順序抽取，只抽取課程需要的頁面
+- 不可把圖片集中成圖庫；每張圖要放在相對應的段落、附件或圖號後方
+- 公務課程內容若有附件、圖號或檢查表順序，需依原始文件邏輯排序
+
+### 影片嵌入
+
+影片來源順序固定為：本地 MP4 優先，YouTube embed 作為備援。
+
+**本地 MP4（優先）：**
+```markdown
+[video src="assets/videos/demo-video.mp4" title="Demo 影片"]
+```
+
+- 有可用本地 MP4 時，優先使用 `[video]`
+- 本地影片應放在 `assets/videos/`
+- 檔名使用安全英文 kebab-case，避免空白、`#`、長中文檔名或特殊符號
+- 若同時有 YouTube URL 與本地 MP4，優先放 `[video]`，YouTube embed 或連結只作為備援/來源參考
+
+**YouTube embed（備援，帶標題）：**
 ```markdown
 [youtube id="dQw4w9WgXcQ" title="Demo 影片"]
 ```
 
-**區塊（帶說明文字）：**
+**YouTube embed（備援，帶說明文字）：**
 ```markdown
 [youtube id="dQw4w9WgXcQ"]
 這是一段示範影片的說明
@@ -315,6 +345,8 @@ quotes:
 - `id` 為 YouTube 影片 ID（網址中 `v=` 後面的值）
 - `title` 為選填的標題/說明，顯示在影片下方
 - 影片以 16:9 比例響應式嵌入
+- 只有在沒有本地 MP4、MP4 無法取得，或使用者明確指定時，才使用 `[youtube]` embed
+- 可在本地 MP4 下方加 `[button href="https://youtu.be/..." label="在 YouTube 開啟影片"]` 作為來源參考或備援開啟按鈕
 - 本機預覽時若 YouTube iframe 受瀏覽器限制，可改用 YouTube 連結確認內容
 
 ### Bonus 彈窗
